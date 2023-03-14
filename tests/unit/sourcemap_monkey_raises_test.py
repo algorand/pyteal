@@ -1,33 +1,30 @@
-from configparser import ConfigParser
 from contextlib import contextmanager
-from unittest import mock
 
 import pytest
 
+from feature_gates import FeatureGates
+
 
 @contextmanager
-def mock_ConfigParser_context():
-    patcher = mock.patch.object(
-        ConfigParser, "getboolean", side_effect=Exception("1337")
-    )
-    patcher.start()
+def sourcemap_disabled():
+    previous = FeatureGates.sourcemap_enabled()
+    FeatureGates.set_sourcemap_enabled(False)
     yield
-    patcher.stop()
+    FeatureGates.set_sourcemap_enabled(previous)
 
 
 @pytest.mark.serial
-def test_sourcemap_fails_elegantly_when_no_ini():
+def test_sourcemap_fails_elegantly_when_disabled():
     from examples.application.abi.algobank import router
     from pyteal import OptimizeOptions
     from pyteal.errors import SourceMapDisabledError
 
-    with mock_ConfigParser_context():
-        with pytest.raises(SourceMapDisabledError) as smde:
+    with sourcemap_disabled():
+        with pytest.raises(
+            SourceMapDisabledError, match="because stack frame discovery is turned off"
+        ):
             router.compile(
                 version=6,
                 optimize=OptimizeOptions(scratch_slots=True),
                 with_sourcemaps=True,
             )
-
-    assert "pyteal.ini" in str(smde.value)
-    assert "1337" not in str(smde.value)

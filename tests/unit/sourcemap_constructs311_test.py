@@ -1,20 +1,18 @@
-from configparser import ConfigParser
 from copy import deepcopy
 import sys
 from typing import Literal
-from unittest import mock
 
+from feature_gates import FeatureGates
 import pytest
-
 from tests.unit.sourcemap_monkey_unit_test import router_static_abisubroutine
 
 
 @pytest.fixture
-def mock_ConfigParser():
-    patcher = mock.patch.object(ConfigParser, "getboolean", return_value=True)
-    patcher.start()
+def sourcemap_enabled():
+    previous = FeatureGates.sourcemap_enabled()
+    FeatureGates.set_sourcemap_enabled(True)
     yield
-    patcher.stop()
+    FeatureGates.set_sourcemap_enabled(previous)
 
 
 P = "#pragma version {v}"  # fill the template at runtime
@@ -2056,7 +2054,7 @@ CONSTRUCTS = [
 @pytest.mark.parametrize("i, test_case", enumerate(CONSTRUCTS))
 @pytest.mark.parametrize("mode", ["Application", "Signature"])
 @pytest.mark.parametrize("version", range(2, CONSTRUCTS_LATEST_VERSION + 1))
-def test_constructs_311(mock_ConfigParser, i, test_case, mode, version):
+def test_constructs_311(sourcemap_enabled, i, test_case, mode, version):
     constructs_test(i, test_case, mode, version)
 
 

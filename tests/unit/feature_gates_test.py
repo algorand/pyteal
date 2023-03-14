@@ -1,6 +1,6 @@
 import pytest
 
-from feature_gates import FeatureGates, _FeatureGatesConfig
+from feature_gates import FeatureGates
 
 
 @pytest.mark.serial
@@ -8,77 +8,33 @@ def test_feature_gates():
     with pytest.raises(ValueError, match="Unknown feature='foo'"):
         FeatureGates.get("foo")
 
-    with pytest.raises(ValueError, match="Feature sourcemap_enabled is not set"):
-        FeatureGates.get("sourcemap_enabled")
+    with pytest.raises(ValueError, match="Cannot set unknown feature='foo'"):
+        FeatureGates.set("foo", 42)
 
-    with pytest.raises(ValueError, match="Feature sourcemap_enabled is not set"):
-        FeatureGates.sourcemap_enabled()
-
-    FeatureGates.set("sourcemap_enabled", True)
-    assert FeatureGates.get("sourcemap_enabled") is True
-    assert FeatureGates.sourcemap_enabled() is True
-
-    with pytest.raises(ValueError, match="Feature sourcemap_debug is not set"):
-        FeatureGates.get("sourcemap_debug")
-
-    with pytest.raises(ValueError, match="Feature sourcemap_debug is not set"):
-        FeatureGates.sourcemap_debug()
-
-    FeatureGates.load()
-
-    from pyteal.stack_frame import NatalStackFrame
-
-    # `sourcemap_enabled` wasn't affected by loading:
-    assert FeatureGates.get("sourcemap_enabled") is True
-    assert FeatureGates.sourcemap_enabled() is True
-    assert NatalStackFrame.sourcemapping_is_off() is False
-
-    # but `sourcempa_debug` was affected:
+    # presently, source mapping features are off by default:
+    assert FeatureGates.get("sourcemap_enabled") is False
     assert FeatureGates.get("sourcemap_debug") is False
+    assert FeatureGates.sourcemap_enabled() is False
     assert FeatureGates.sourcemap_debug() is False
-    assert NatalStackFrame._debug is False
 
+    from pyteal import stack_frame
 
-@pytest.mark.serial
-def test_feature_gates_load():
-    # reset the gates by force
-    FeatureGates._gates = _FeatureGatesConfig()
+    assert stack_frame.NatalStackFrame.sourcemapping_is_off() is True
 
-    # simulate before loading - the gates are empty
-    all_empty = _FeatureGatesConfig(None, None)
-    assert all_empty == FeatureGates._gates
-
-    # sanity DEFAULTS check
-    all_off = _FeatureGatesConfig(False, False)
-    assert all_off == FeatureGates.DEFAULTS
-
-    # load without a config file
-    FeatureGates.load()
-    assert FeatureGates.DEFAULTS == FeatureGates._gates
-
-    # load with all-off config file
-    FeatureGates.load(config_path="tests/unit/fixtures/all_off.ini", overwrite=True)
-    assert all_off == FeatureGates._gates
-
-    # load with all-on config file
-    all_on = _FeatureGatesConfig(True, True)
-    FeatureGates.load(config_path="tests/unit/fixtures/all_on.ini", overwrite=True)
-    assert all_on == FeatureGates._gates
-
-    # load with all-off config file, but without overwrite
-    FeatureGates.load(config_path="tests/unit/fixtures/all_off.ini", overwrite=False)
-    # nothing changed
-    assert all_on == FeatureGates._gates
-
-    # turn off sourcemap_debug
+    # enable source mapping:
+    FeatureGates.set("sourcemap_enabled", True)
+    FeatureGates.set("sourcemap_debug", True)
+    assert FeatureGates.get("sourcemap_enabled") is True
+    assert FeatureGates.get("sourcemap_debug") is True
+    assert FeatureGates.sourcemap_enabled() is True
     assert FeatureGates.sourcemap_debug() is True
-    FeatureGates.set_sourcemap_debug(False)
-    assert FeatureGates.sourcemap_debug() is False
 
-    # load with default (non-overwrite) config file
-    FeatureGates.load(config_path="tests/unit/fixtures/all_on.ini")
-    assert FeatureGates.sourcemap_debug() is False
+    # unfortunately, it's too late to enable source mapping:
+    assert stack_frame.NatalStackFrame.sourcemapping_is_off() is True
 
-    # load again, but with overwrite
-    FeatureGates.load(config_path="tests/unit/fixtures/all_on.ini", overwrite=True)
-    assert FeatureGates.sourcemap_debug() is True
+    # but if we reload now...
+    import importlib
+
+    importlib.reload(stack_frame)
+
+    assert stack_frame.NatalStackFrame.sourcemapping_is_off() is False

@@ -1,18 +1,17 @@
-from configparser import ConfigParser
 from pathlib import Path
-from unittest import mock
-
 import pytest
+
+from feature_gates import FeatureGates
 
 RPS = Path.cwd() / "tests" / "teal"
 
 
 @pytest.fixture
-def mock_ConfigParser():
-    patcher = mock.patch.object(ConfigParser, "getboolean", return_value=True)
-    patcher.start()
+def sourcemap_enabled():
+    previous = FeatureGates.sourcemap_enabled()
+    FeatureGates.set_sourcemap_enabled(True)
     yield
-    patcher.stop()
+    FeatureGates.set_sourcemap_enabled(previous)
 
 
 def compare_and_assert(file, actual):
@@ -32,7 +31,7 @@ def no_regressions_rps():
 
 
 @pytest.mark.serial
-def test_annotated_rps(mock_ConfigParser):
+def test_annotated_rps(sourcemap_enabled):
     from pyteal import Compilation, Mode
     from pyteal.compiler.sourcemap import _PyTealSourceMapper
     from tests.teal.rps import approval_program

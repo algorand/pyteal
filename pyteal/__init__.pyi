@@ -1,11 +1,6 @@
 ## File generated from scripts/generate_init.py.
 ## DO NOT EDIT DIRECTLY
 
-# this needs to be imported before any other pyteal module
-from feature_gates import FeatureGates
-
-FeatureGates.load()
-
 from pyteal.ast import *
 from pyteal.ast import __all__ as ast_all
 from pyteal.compiler import (
