@@ -214,8 +214,8 @@ class NatalStackFrame:
 
     _keep_all_debugging = False
 
-    @classmethod
-    def sourcemapping_is_off(cls) -> bool:
+    @staticmethod
+    def sourcemapping_is_off() -> bool:
         return not FeatureGates.sourcemap_enabled()  # type: ignore[attr-defined]
 
     @classmethod
