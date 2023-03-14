@@ -12,14 +12,6 @@ import re
 from executing import Source  # type: ignore
 
 
-def _sourcmapping_is_off() -> bool:
-    return not FeatureGates.sourcemap_enabled()  # type: ignore[attr-defined]
-
-
-def _debug_frames() -> bool:
-    return FeatureGates.sourcemap_debug()  # type: ignore[attr-defined]
-
-
 @dataclass(frozen=True)
 class StackFrame:
     """
@@ -78,7 +70,7 @@ class StackFrame:
         """
         node = cast(AST | None, Source.executing(f.frame).node)
         frame = StackFrame(
-            f, node, creator, full_stack if NatalStackFrame._debug else None
+            f, node, creator, full_stack if NatalStackFrame._debugging() else None
         )
         return frame if frame._not_py_crud() else None
 
@@ -179,17 +171,31 @@ class StackFrame:
 @contextmanager
 def sourcemapping_off_context():
     """Context manager that turns off sourcemapping for the duration of the context"""
-    _no_stackframes_before = NatalStackFrame._no_stackframes
-    _debug_before = NatalStackFrame._debug
-    NatalStackFrame._no_stackframes = True
-    NatalStackFrame._debug = False
+    from feature_gates import FeatureGates
+
+    _sourcemap_before = FeatureGates.sourcemap_enabled()
+    _sourcemap_debug_before = FeatureGates.sourcemap_debug()
+    FeatureGates.set_sourcemap_enabled(False)
+    FeatureGates.set_sourcemap_debug(False)
+    assert (
+        NatalStackFrame.sourcemapping_is_off()
+    ), "Unexpected error. Please report to PyTeal team."
+    assert (
+        NatalStackFrame._debugging() is False
+    ), "Unexpected error. Please report to PyTeal team."
 
     try:
         yield
 
     finally:
-        NatalStackFrame._no_stackframes = _no_stackframes_before
-        NatalStackFrame._debug = _debug_before
+        FeatureGates.set_sourcemap_debug(_sourcemap_debug_before)
+        FeatureGates.set_sourcemap_enabled(_sourcemap_before)
+        assert (
+            NatalStackFrame.sourcemapping_is_off() is not _sourcemap_before
+        ), "Unexpected error. Please report to PyTeal team."
+        assert (
+            NatalStackFrame._debugging() is _sourcemap_debug_before
+        ), "Unexpected error. Please report to PyTeal team."
 
 
 class NatalStackFrame:
@@ -206,19 +212,15 @@ class NatalStackFrame:
     the name is misleading.
     """
 
-    _no_stackframes: bool = _sourcmapping_is_off()
-    _debug: bool = _debug_frames()
     _keep_all_debugging = False
 
     @classmethod
-    def sourcemapping_is_off(cls, _force_from_config: bool = False) -> bool:
-        """
-        The `_force_from_config` parameter reverts sourcemapping enablement to the configuration.
-        """
-        if _force_from_config:
-            cls._no_stackframes = _sourcmapping_is_off()
+    def sourcemapping_is_off(cls) -> bool:
+        return not FeatureGates.sourcemap_enabled()  # type: ignore[attr-defined]
 
-        return cls._no_stackframes
+    @classmethod
+    def _debugging(cls) -> bool:
+        return FeatureGates.sourcemap_debug()  # type: ignore[attr-defined]
 
     def __init__(
         self,

@@ -37,15 +37,24 @@ def sourcemap_enabled():
     FeatureGates.set_sourcemap_enabled(previous)
 
 
+@pytest.fixture
+def sourcemap_disabled():
+    from feature_gates import FeatureGates
+
+    previous = FeatureGates.sourcemap_enabled()
+    FeatureGates.set_sourcemap_enabled(False)
+    yield
+    FeatureGates.set_sourcemap_enabled(previous)
+
+
 @pytest.mark.serial
-def test_frames(StackFrame_keep_all_debugging):
+def test_frames(sourcemap_enabled, StackFrame_keep_all_debugging):
     from pyteal.stack_frame import NatalStackFrame
 
-    originally = NatalStackFrame._no_stackframes
-    NatalStackFrame._no_stackframes = False
+    assert NatalStackFrame.sourcemapping_is_off() is False
 
     this_file, this_func = "sourcemap_test.py", "test_frames"
-    this_lineno, this_frame = 48, NatalStackFrame()._frames[1]
+    this_lineno, this_frame = 57, NatalStackFrame()._frames[1]
     code = (
         f"    this_lineno, this_frame = {this_lineno}, NatalStackFrame()._frames[1]\n"
     )
@@ -67,16 +76,12 @@ def test_frames(StackFrame_keep_all_debugging):
     assert isinstance(node.parent, ast.Attribute)  # type: ignore
     assert isinstance(node.parent.parent, ast.Subscript)  # type: ignore
 
-    NatalStackFrame._no_stackframes = originally
-
 
 @pytest.mark.serial
-def test_TealMapItem_source_mapping():
+def test_TealMapItem_source_mapping(sourcemap_enabled):
     from pyteal.stack_frame import NatalStackFrame
 
-    originally = NatalStackFrame._no_stackframes
-
-    NatalStackFrame._no_stackframes = False
+    assert NatalStackFrame.sourcemapping_is_off() is False
 
     import pyteal as pt
     from pyteal.compiler.sourcemap import TealMapItem
@@ -111,7 +116,7 @@ def test_TealMapItem_source_mapping():
         source_files=source_files,
         source_files_lines=[mock_source_lines],
     )
-    expected_json = '{"version": 3, "sources": ["tests/unit/sourcemap_test.py"], "names": [], "mappings": "AAmFW;AAAY;AAAZ", "file": "dohhh.teal", "sourceRoot": "~"}'
+    expected_json = '{"version": 3, "sources": ["tests/unit/sourcemap_test.py"], "names": [], "mappings": "AAwFW;AAAY;AAAZ", "file": "dohhh.teal", "sourceRoot": "~"}'
 
     assert expected_json == json.dumps(r3sm.to_json())
 
@@ -124,8 +129,6 @@ def test_TealMapItem_source_mapping():
     # TODO: test various properties of r3sm_unmarshalled
 
     assert expected_json == json.dumps(r3sm_unmarshalled.to_json())
-
-    NatalStackFrame._no_stackframes = originally
 
 
 def compare_and_assert(file, actual):
@@ -157,27 +160,20 @@ def test_no_regression_with_sourcemap_as_configured_algobank():
 
 
 @pytest.mark.serial
-def test_no_regression_with_sourcemap_enabled_algobank():
+def test_no_regression_with_sourcemap_enabled_algobank(sourcemap_enabled):
     from pyteal.stack_frame import NatalStackFrame
 
-    originally = NatalStackFrame._no_stackframes
-    NatalStackFrame._no_stackframes = False
-
+    assert NatalStackFrame.sourcemapping_is_off() is False
     no_regressions_algobank()
-
-    NatalStackFrame._no_stackframes = originally
 
 
 @pytest.mark.serial
-def test_no_regression_with_sourcemap_disabled_algobank():
+def test_no_regression_with_sourcemap_disabled_algobank(sourcemap_disabled):
     from pyteal.stack_frame import NatalStackFrame
 
-    originally = NatalStackFrame._no_stackframes
-    NatalStackFrame._no_stackframes = True
+    assert NatalStackFrame.sourcemapping_is_off() is True
 
     no_regressions_algobank()
-
-    NatalStackFrame._no_stackframes = originally
 
 
 @pytest.mark.serial

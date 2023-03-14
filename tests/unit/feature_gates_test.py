@@ -29,12 +29,4 @@ def test_feature_gates():
     assert FeatureGates.sourcemap_enabled() is True
     assert FeatureGates.sourcemap_debug() is True
 
-    # unfortunately, it's too late to enable source mapping:
-    assert stack_frame.NatalStackFrame.sourcemapping_is_off() is True
-
-    # but if we reload now...
-    import importlib
-
-    importlib.reload(stack_frame)
-
     assert stack_frame.NatalStackFrame.sourcemapping_is_off() is False

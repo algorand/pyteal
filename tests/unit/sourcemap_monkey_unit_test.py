@@ -148,7 +148,6 @@ def test_feature_gate_for_frames(sourcemap_enabled):
     from pyteal.stack_frame import NatalStackFrame
 
     assert NatalStackFrame.sourcemapping_is_off() is False
-    assert NatalStackFrame.sourcemapping_is_off(_force_from_config=True) is False
 
 
 def make(x, y, z):
@@ -218,19 +217,20 @@ def router_static_abisubroutine(pt):
     return router
 
 
-SUCCESSFUL_SUBROUTINE_LINENO = 205
+SUCCESSFUL_SUBROUTINE_LINENO = 204
 
 
 @pytest.mark.serial
 def test_hybrid_w_offset(sourcemap_debug, sourcemap_enabled):
     from feature_gates import FeatureGates
+    from pyteal import stack_frame
 
     assert FeatureGates.sourcemap_enabled() is True
     assert FeatureGates.sourcemap_debug() is True
+    assert stack_frame.NatalStackFrame.sourcemapping_is_off() is False
+    assert stack_frame.NatalStackFrame._debugging() is True
 
     import pyteal as pt
-
-    assert pt.stack_frame.NatalStackFrame._debug is True
 
     router = router_static_abisubroutine(pt)
     rci = pt.ast.router._RouterCompileInput(
