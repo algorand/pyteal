@@ -28,6 +28,7 @@ class FeatureGates:
     * FeatureGates.foo_on() -> bool
     * FeatureGates.set_foo_on(gate: bool)
     """
+
     # default values for feature gates:
     _gates: Final[_FeatureGatesConfig] = _FeatureGatesConfig(
         sourcemap_enabled=False,
