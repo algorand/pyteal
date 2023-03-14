@@ -1,19 +1,23 @@
 """
 This example shows how to use the source map feature to for a PyTeal program.
 
-To enable the source mapping (at the time of this writing 3/13/2023)
+To enable the source mapping (at the time of this writing 3/14/2023)
 one must import `FeatureGate` from `feature_gates` and call `FeatureGate.set_sourcemap_enabled(True)`.
 This import must occur before any object from PyTeal is imported, as PyTeal will
-default to its own sourcemap configuration if not set beforehand.
+default to its own sourcemap configuration if not set beforehand, and PyTeal imports have
+the side effect of importing expressions that the sourcemapper needs to be aware of.
 """
 
 from feature_gates import FeatureGates
 
+FeatureGates.set_sourcemap_enabled(True)
+
+# INTENTIONALLY importing pyteal and objects _AFTER_ enabling the sourcemap feature
+import pyteal as pt
+from pyteal import Compilation, Mode  # noqa: E402
+
 
 def program():
-    # we defer importing pyteal until after we set sourcemap feature
-    import pyteal as pt
-
     @pt.Subroutine(pt.TealType.uint64)
     def is_even(i):
         return (
@@ -39,14 +43,6 @@ if __name__ == "__main__":
     # This assumes running as follows:
     # cd examples/application
     # python sourcemap.py
-
-    # print out debugging details about FeatureGates:
-    FeatureGates.verbose = True
-
-    FeatureGates.set_sourcemap_enabled(True)
-
-    from pyteal import Compilation, Mode
-
     approval_program = program()
 
     results = Compilation(approval_program, mode=Mode.Application, version=8).compile(

@@ -30,12 +30,11 @@ class FeatureGates:
     """
 
     # default values for feature gates:
-    _gates: Final[_FeatureGatesConfig] = _FeatureGatesConfig(
+    _gates: _FeatureGatesConfig = _FeatureGatesConfig(
         sourcemap_enabled=False,
         sourcemap_debug=False,
     )
     _features: Final[set[str]] = set(vars(_gates).keys())
-    verbose: bool = False
 
     @classmethod
     def _make_feature(cls, feature: str):
