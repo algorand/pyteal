@@ -13,7 +13,7 @@ from feature_gates import FeatureGates
 FeatureGates.set_sourcemap_enabled(True)
 
 # INTENTIONALLY importing pyteal and objects _AFTER_ enabling the sourcemap feature
-import pyteal as pt
+import pyteal as pt  # noqa: E402
 from pyteal import Compilation, Mode  # noqa: E402
 
 
