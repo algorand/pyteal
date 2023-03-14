@@ -1,10 +1,10 @@
 """
 This example shows how to use the source map feature to for a PyTeal program.
 
-For this example, no `pyteal.ini` file is assumed and to enable the feature
-one must import `FeatureGate` from `feature_gates` and set `FeatureGate.sourcemap_enabled` to `True`.
+To enable the source mapping (at the time of this writing 3/13/2023)
+one must import `FeatureGate` from `feature_gates` and call `FeatureGate.set_sourcemap_enabled(True)`.
 This import must occur before any object from PyTeal is imported, as PyTeal will
-default to its own sourcemap configuration if not set before hand.
+default to its own sourcemap configuration if not set beforehand.
 """
 
 from feature_gates import FeatureGates
