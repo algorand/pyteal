@@ -181,7 +181,7 @@ def sourcemapping_off_context():
         NatalStackFrame.sourcemapping_is_off()
     ), "Unexpected error. Please report to PyTeal team."
     assert (
-        NatalStackFrame._debugging() is False
+        not NatalStackFrame._debugging()
     ), "Unexpected error. Please report to PyTeal team."
 
     try:
