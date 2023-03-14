@@ -1,5 +1,5 @@
 """
-This example shows how to use the sourcemap feature to generate a source map for a PyTeal program.
+This example shows how to use the source map feature to for a PyTeal program.
 
 For this example, no `pyteal.ini` file is assumed and to enable the feature
 one must import `FeatureGate` from `feature_gates` and set `FeatureGate.sourcemap_enabled` to `True`.
