@@ -461,6 +461,7 @@ class TealMapItem(PyTealFrame):
         teal_line: str,
         teal_component: "pt.TealComponent",
         pcs: list[int] | None = None,
+        is_sentinel: bool = False,
     ):
         super().__init__(
             frame_info=pt_frame.frame_info,
@@ -474,6 +475,7 @@ class TealMapItem(PyTealFrame):
         self.teal_line: Final[str] = teal_line
         self.teal_component: Final[pt.TealComponent] = teal_component
         self.pcs: Final[list[int] | None] = pcs if pcs else None
+        self.is_sentinel: Final[bool] = is_sentinel
 
     def pcs_repr(self, prefix: str = "") -> str:
         if not self.pcs:
@@ -482,7 +484,7 @@ class TealMapItem(PyTealFrame):
 
     def __repr__(self) -> str:
         P = " // "
-        return f"TealLine({self.teal_lineno}: {self.teal_line}{self.pcs_repr(prefix=P)} // PyTeal: {self._hybrid_w_offset()[0]}"
+        return f"TealLine({self.teal_lineno}: {self.teal_line}{self.pcs_repr(prefix=P)} // PyTeal: {self._hybrid_w_offset()[0]})"
 
     def teal_column(self) -> int:
         """Always returns 0 as the 0-index STARTING column offset"""
@@ -700,7 +702,7 @@ class _PyTealSourceMapper:
         self.teal_filename: str | None = teal_filename
         self.verbose: bool = verbose
 
-        self._best_frames: list[PyTealFrame] = []
+        self._best_frames: list[PyTealFrame | None] = []
         self._cached_r3sourcemap: R3SourceMap | None = None
 
         self._cached_tmis: list[TealMapItem] = []
@@ -793,13 +795,19 @@ class _PyTealSourceMapper:
         #   TO:   a PyTealFrame
         # overall resulting in a list[PyTealFrame]
         self._best_frames = [
-            tc.stack_frames().best().as_pyteal_frame() for tc in self.components
+            tc.stack_frames()._best_frame_as_pyteal_frame() for tc in self.components
         ]
 
         if not self._best_frames:
             raise self._unexpected_error(
                 f"This shouldn't have happened as we already checked! Check again: {len(self.components)=}"
             )
+
+        # stand-in in the case of missing frames
+        sentinel_frame = self._best_frames[0]
+        assert (
+            sentinel_frame
+        ), "Abort source mapping as even the very first best frame is missing"
 
         # PASS II. Attempt to fill any "gaps" by inferring from adjacent BFC's
         self._best_frames, inferred = self._infer(self._best_frames)
@@ -816,11 +824,12 @@ class _PyTealSourceMapper:
                     pcs = pcsm.line_to_pc.get(lineno - 1, [])
                 self._cached_tmis.append(
                     TealMapItem(
-                        pt_frame=best_frame,
+                        pt_frame=best_frame or sentinel_frame,
                         teal_lineno=lineno,
                         teal_line=line,  # type: ignore
                         teal_component=self.components[i],
                         pcs=pcs,
+                        is_sentinel=(best_frame is None),
                     )
                 )
                 lineno += 1
@@ -856,6 +865,16 @@ class _PyTealSourceMapper:
                 raise self._unexpected_error(
                     f"TealMapItem's don't match R3SourceMap.file_lines at index {i}. ('{tmi_line}' v. '{target_line}')"
                 )
+
+        for tmi in self._cached_tmis:
+            if not tmi.is_sentinel:
+                continue
+            print(
+                f"""-----------------
+WARNING: Source mapping is unknown for the following:
+{tmi!r}
+"""
+            )
 
     def _build_r3sourcemap(self):
         assert self._cached_tmis, "Unexpected error: no cached TealMapItems found"
@@ -919,8 +938,8 @@ class _PyTealSourceMapper:
 
     @classmethod
     def _infer(
-        cls, best_frames: list[PyTealFrame]
-    ) -> tuple[list[PyTealFrame], list[int]]:
+        cls, best_frames: list[PyTealFrame | None]
+    ) -> tuple[list[PyTealFrame | None], list[int]]:
         inferred = []
         frames = list(best_frames)
         N = len(frames)
