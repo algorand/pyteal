@@ -12,6 +12,14 @@ import re
 from executing import Source  # type: ignore
 
 
+class SourceMapStackFramesError(RuntimeError):
+    def __init__(self, msg: str):
+        self.msg = msg
+
+    def __str__(self):
+        return self.msg
+
+
 @dataclass(frozen=True)
 class StackFrame:
     """
@@ -96,11 +104,7 @@ class StackFrame:
     ]
     _internal_paths_re = re.compile("|".join(_internal_paths))
 
-    def as_pyteal_frame(
-        self,
-        rel_paths: bool = True,
-        parent: "PyTealFrame | None" = None,
-    ) -> "PyTealFrame":
+    def as_pyteal_frame(self) -> "PyTealFrame":
         """
         Downcast one level in the class hierarchy
         """
@@ -109,8 +113,8 @@ class StackFrame:
             node=self.node,
             creator=self.creator,
             full_stack=self.full_stack,
-            rel_paths=rel_paths,
-            parent=parent,
+            rel_paths=True,
+            parent=None,
         )
 
     @classmethod
@@ -284,15 +288,34 @@ class NatalStackFrame:
     def __len__(self) -> int:
         return len(self._frames)
 
-    def best(self) -> StackFrame:
+    def _best_frame(self) -> StackFrame:
         """
-        Return the best guess as to the user-authored birthplace of the
-        associated StackFrame's
+        Return the best guess as to the user-authored birthplace of the associated StackFrame's.
+        If self._frames is non-empty return the last frame in the stack trace.
+        Otherwise, raise a SourceMapStackFramesError.
         """
-        assert (
-            self._frames
-        ), f"expected to have some frames but currently {self._frames=}"
+        if not self._frames:
+            raise SourceMapStackFramesError(
+                f"expected to have some frames but currently {self._frames=}"
+            )
+
         return self._frames[-1]
+
+    def _best_frame_as_pyteal_frame(self) -> "PyTealFrame | None":
+        """
+        Return the best frame converted to a PyTealFrame, or None if there was an error.
+        """
+        try:
+            return self._best_frame().as_pyteal_frame()
+        except SourceMapStackFramesError as smsfe:
+            print(
+                f"""-------------------
+WARNING: Error retrieving the best frame for source mapping.
+This may occur because FeatureGates was imported and `FeatureGates.set_sourcemap_enabled(True)` called _AFTER_ pyteal was imported.
+error: {smsfe}
+"""
+            )
+        return None
 
     def __repr__(self) -> str:
         return f"{'C' if self._compiler_gen else 'U'}{self._frames}"
@@ -347,9 +370,11 @@ class NatalStackFrame:
             return
 
         def dbg(e: Expr):
-            print(
-                type(e), ": ", e.stack_frames.best().as_pyteal_frame().hybrid_unparsed()
-            )
+            try:
+                finfo = e.stack_frames._best_frame().as_pyteal_frame().hybrid_unparsed()
+            except SourceMapStackFramesError as smsfe:
+                finfo = str(smsfe)
+            print(type(e), ": ", finfo)
 
         cls._walk_asts(dbg, *exprs)
 

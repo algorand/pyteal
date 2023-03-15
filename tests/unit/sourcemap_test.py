@@ -378,6 +378,49 @@ def test_PyTealSourceMapper_validate_build_annotate():
     ptsm._validate_annotated(omit_headers, teal, annotated_w_headers)
 
 
+def test_examples_sourcemap():
+    """
+    Test to ensure that examples/application/teal/sourcemap.py doesn't go stale
+    """
+    from examples.application.sourcemap import Compilation, Mode, program
+
+    examples = Path.cwd() / "examples" / "application" / "teal"
+
+    approval_program = program()
+
+    results = Compilation(approval_program, mode=Mode.Application, version=8).compile(
+        with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True
+    )
+
+    teal = examples / "sourcemap.teal"
+    annotated = examples / "sourcemap_annotated.teal"
+
+    with open(teal) as f:
+        assert f.read() == results.teal
+
+    with open(annotated) as f:
+        fixture = f.read().splitlines()
+        annotated = results.sourcemap.annotated_teal.splitlines()
+        for i, (f, a) in enumerate(zip(fixture, annotated)):
+            f_cols = f.split()
+            a_cols = a.split()
+            if f_cols == a_cols:
+                continue
+
+            if f_cols[-1] == "annotate_teal_headers=True)":
+                assert f_cols[:2] == a_cols[:2], f"index {i} doesn't match"
+                assert f_cols[-4:] == a_cols[-4:], f"index {i} doesn't match"
+                continue
+
+            # must differ because fixture repeats PYTEAL PATH so omits it
+            assert len(f_cols) == len(a_cols) - 1, f"index {i} doesn't match"
+
+            a_comment = a_cols.index("//")
+            assert f_cols == (
+                a_cols[: a_comment + 1] + a_cols[a_comment + 2 :]
+            ), f"index {i} doesn't match"
+
+
 @pytest.mark.skip(
     reason="""Supressing this flaky test as 
 router_test::test_router_compile_program_idempotence is similar in its goals
