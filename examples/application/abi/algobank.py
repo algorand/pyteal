@@ -2,10 +2,6 @@
 from pyteal import *
 import json
 
-from feature_gates import FeatureGates
-
-FeatureGates.set_sourcemap_enabled(True)
-
 
 @Subroutine(TealType.none)
 def assert_sender_is_creator() -> Expr:
@@ -129,96 +125,3 @@ if __name__ == "__main__":
 
     with open("algobank.json", "w") as f:
         f.write(json.dumps(contract.dictify(), indent=4))
-
-    sourcemaps = router.compile(
-        version=6,
-        optimize=OptimizeOptions(scratch_slots=True),
-        with_sourcemaps=True,
-        annotate_teal=True,
-    )
-    with open("algobank_with_sourcemap.teal", "w") as f:
-        f.write(sourcemaps.approval_sourcemap.annotated_teal)
-
-"""
-❯ python algobank.py
--------------------
-WARNING: Error retrieving the best frame for source mapping.
-This may occur because FeatureGates was imported and `FeatureGates.set_sourcemap_enabled(True)` called _AFTER_ pyteal was imported.
-error: expected to have some frames but currently self._frames=[]
-
--------------------
-WARNING: Error retrieving the best frame for source mapping.
-This may occur because FeatureGates was imported and `FeatureGates.set_sourcemap_enabled(True)` called _AFTER_ pyteal was imported.
-error: expected to have some frames but currently self._frames=[]
-
--------------------
-WARNING: Error retrieving the best frame for source mapping.
-This may occur because FeatureGates was imported and `FeatureGates.set_sourcemap_enabled(True)` called _AFTER_ pyteal was imported.
-error: expected to have some frames but currently self._frames=[]
-
--------------------
-WARNING: Error retrieving the best frame for source mapping.
-This may occur because FeatureGates was imported and `FeatureGates.set_sourcemap_enabled(True)` called _AFTER_ pyteal was imported.
-error: expected to have some frames but currently self._frames=[]
-
--------------------
-WARNING: Error retrieving the best frame for source mapping.
-This may occur because FeatureGates was imported and `FeatureGates.set_sourcemap_enabled(True)` called _AFTER_ pyteal was imported.
-error: expected to have some frames but currently self._frames=[]
-
--------------------
-WARNING: Error retrieving the best frame for source mapping.
-This may occur because FeatureGates was imported and `FeatureGates.set_sourcemap_enabled(True)` called _AFTER_ pyteal was imported.
-error: expected to have some frames but currently self._frames=[]
-
--------------------
-WARNING: Error retrieving the best frame for source mapping.
-This may occur because FeatureGates was imported and `FeatureGates.set_sourcemap_enabled(True)` called _AFTER_ pyteal was imported.
-error: expected to have some frames but currently self._frames=[]
-
--------------------
-WARNING: Error retrieving the best frame for source mapping.
-This may occur because FeatureGates was imported and `FeatureGates.set_sourcemap_enabled(True)` called _AFTER_ pyteal was imported.
-error: expected to have some frames but currently self._frames=[]
-
--------------------
-WARNING: Error retrieving the best frame for source mapping.
-This may occur because FeatureGates was imported and `FeatureGates.set_sourcemap_enabled(True)` called _AFTER_ pyteal was imported.
-error: expected to have some frames but currently self._frames=[]
-
------------------
-WARNING: Source mapping is unknown for the following:
-TealLine(21: int NoOp // PyTeal: router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), with_sourcemaps=True, annotate_teal=True))
-
------------------
-WARNING: Source mapping is unknown for the following:
-TealLine(42: int NoOp // PyTeal: router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), with_sourcemaps=True, annotate_teal=True))
-
------------------
-WARNING: Source mapping is unknown for the following:
-TealLine(63: int NoOp // PyTeal: router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), with_sourcemaps=True, annotate_teal=True))
-
------------------
-WARNING: Source mapping is unknown for the following:
-TealLine(70: int OptIn // PyTeal: router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), with_sourcemaps=True, annotate_teal=True))
-
------------------
-WARNING: Source mapping is unknown for the following:
-TealLine(98: int NoOp // PyTeal: router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), with_sourcemaps=True, annotate_teal=True))
-
------------------
-WARNING: Source mapping is unknown for the following:
-TealLine(102: int OptIn // PyTeal: router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), with_sourcemaps=True, annotate_teal=True))
-
------------------
-WARNING: Source mapping is unknown for the following:
-TealLine(106: int CloseOut // PyTeal: router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), with_sourcemaps=True, annotate_teal=True))
-
------------------
-WARNING: Source mapping is unknown for the following:
-TealLine(110: int UpdateApplication // PyTeal: router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), with_sourcemaps=True, annotate_teal=True))
-
------------------
-WARNING: Source mapping is unknown for the following:
-TealLine(114: int DeleteApplication // PyTeal: router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), with_sourcemaps=True, annotate_teal=True))
-"""
