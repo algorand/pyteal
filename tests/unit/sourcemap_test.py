@@ -412,10 +412,6 @@ def test_examples_sourcemap():
                 assert f_cols[-4:] == a_cols[-4:], f"index {i} doesn't match"
                 continue
 
-            if len(f_cols) == len(a_cols):
-                assert f_cols == a_cols, f"index {i} doesn't match"
-                continue
-
             # must differ because fixture repeats PYTEAL PATH so omits it
             assert len(f_cols) == len(a_cols) - 1, f"index {i} doesn't match"
 
