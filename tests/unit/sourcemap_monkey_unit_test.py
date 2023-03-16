@@ -139,7 +139,9 @@ def test_reconstruct(sourcemap_enabled):
             assert expected_lines == actual_lines
 
     if not BRUTE_FORCE_TERRIBLE_SKIPPING:
-        compare_and_assert("algobank_approval.teal", compile_bundle.approval_sourcemapper)
+        compare_and_assert(
+            "algobank_approval.teal", compile_bundle.approval_sourcemapper
+        )
     compare_and_assert("algobank_clear_state.teal", compile_bundle.clear_sourcemapper)
 
 
