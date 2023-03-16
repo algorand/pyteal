@@ -24,7 +24,7 @@ from pyteal.ast.subroutine import (
     OutputKwArgInfo,
     Subroutine,
     SubroutineCall,
-    SubroutineDefinition,
+    SubroutineDefinition
     SubroutineFnWrapper,
 )
 from pyteal.ast.txn import Txn
@@ -33,7 +33,7 @@ from pyteal.compiler.sourcemap import PyTealSourceMap, _PyTealSourceMapper
 from pyteal.config import METHOD_ARG_NUM_CUTOFF
 from pyteal.errors import AlgodClientError, TealInputError, TealInternalError
 from pyteal.ir.ops import Mode
-from pyteal.stack_frame import NatalStackFrame
+from pyteal.stack_frame import NatalStackFrame, sourcemapping_off_context
 from pyteal.types import TealType
 from pyteal.util import algod_with_assertion
 
@@ -136,26 +136,20 @@ class MethodConfig:
 MethodConfig.__module__ = "pyteal"
 
 
+@dataclass
 class OnCompleteAction:
     """
     OnComplete Action, registers bare calls to one single OnCompletion case.
     """
 
-    def __init__(
-        self,
-        action: ActionType | None = None,
-        call_config: CallConfig = CallConfig.NEVER,
-    ):
-        self.action: Final[ActionType | None] = action
-        self.call_config: Final[CallConfig] = call_config
+    action: ActionType | None = field(kw_only=True, default=None)
+    call_config: CallConfig = field(kw_only=True, default=CallConfig.NEVER)
+
+    def __post_init__(self):
         if bool(self.call_config) ^ bool(self.action):
             raise TealInputError(
                 f"action {self.action} and call_config {self.call_config!r} contradicts"
             )
-        # TODO: is this now obsolete?
-        # if isinstance(self.action, Expr):
-        #     self.action._user_defined = True
-
         self.stack_frames: NatalStackFrame = NatalStackFrame()
 
     @staticmethod
@@ -278,6 +272,15 @@ class BareCallActions:
             delete_application=self.delete_application.call_config,
         )
 
+    def get_method_config(self) -> MethodConfig:
+        return MethodConfig(
+            no_op=self.no_op.call_config,
+            opt_in=self.opt_in.call_config,
+            close_out=self.close_out.call_config,
+            update_application=self.update_application.call_config,
+            delete_application=self.delete_application.call_config,
+        )
+
 
 BareCallActions.__module__ = "pyteal"
 
@@ -358,6 +361,13 @@ class CondWithMethod:
 
 
 CondWithMethod.__module__ = "pyteal"
+
+
+def _smap_friendly_approve():
+    # TODO: Consider replacing _smap_friendly_approve() with a reframe_asts()
+    a = Approve()
+    a.stack_frames._compiler_gen = True
+    return a
 
 
 @dataclass
@@ -612,7 +622,7 @@ class ASTBuilder:
                 f"{wrap_to_name} ABIReturnSubroutine is not routable "
                 f"got {handler.subroutine.argument_count()} args with {len(handler.subroutine.abi_args)} ABI args."
             )
-
+        
         ret_expr, subdef = (
             ASTBuilder.__de_abify_subroutine_frame_pointers(handler)
             if use_frame_pt
@@ -853,16 +863,16 @@ class _RouterBundle:
         approval_sourcemap: PyTealSourceMap | None = None
         clear_sourcemap: PyTealSourceMap | None = None
         if self.approval_sourcemapper:
-            approval_sourcemap = self.approval_sourcemapper.get_sourcemap()
+            approval_sourcemap = self.approval_sourcemapper.get_sourcemap(self.approval_teal)
         if self.clear_sourcemapper:
-            clear_sourcemap = self.clear_sourcemapper.get_sourcemap()
+            clear_sourcemap = self.clear_sourcemapper.get_sourcemap(self.clear_teal)
 
         return RouterResults(
-            self.approval_teal,
-            self.clear_teal,
-            self.abi_contract,
-            approval_sourcemap,
-            clear_sourcemap,
+            approval_teal=self.approval_teal,
+            clear_teal=self.clear_teal,
+            abi_contract=self.abi_contract,
+            approval_sourcemap=approval_sourcemap,
+            clear_sourcemap=clear_sourcemap,
         )
 
 
@@ -1152,10 +1162,11 @@ class Router:
                 self.approval_ast.bare_calls = [
                     CondNode(
                         cond := Txn.application_args.length() == Int(0),
-                        cast(Expr, bare_call_approval),
+                        act := cast(Expr, bare_call_approval),
                     )
                 ]
                 NatalStackFrame.reframe_asts(bare_call_approval.stack_frames, cond)
+                act.stack_frames = bare_call_approval.stack_frames
 
         optimize = optimize or OptimizeOptions()
         use_frame_pt = optimize.use_frame_pointers(version)
@@ -1168,9 +1179,11 @@ class Router:
     @contextmanager
     def _cleaning_context(self):
         starting_slot_id = ScratchSlot.nextSlotId
-        yield
-        self._clean()
-        ScratchSlot.reset_slot_numbering(starting_slot_id)
+        try:
+            yield
+        finally:
+            self._clean()
+            ScratchSlot.reset_slot_numbering(starting_slot_id)
 
     def compile_program(
         self,
@@ -1224,8 +1237,6 @@ class Router:
         annotate_teal_concise: bool = True,
     ) -> RouterResults:
         """
-        TODO: out of date comment
-
         Constructs and compiles approval and clear-state programs from the registered methods and
         bare app calls in the router, and also generates a Contract object to allow client read and call
         the methods easily.
@@ -1236,11 +1247,12 @@ class Router:
         or clear state programs, then that program will reject all transactions.
 
         Returns:
-            A tuple of three objects.
-
-            * approval_program: compiled approval program string
-            * clear_state_program: compiled clear-state program string
-            * contract: a Python SDK Contract object to allow clients to make off-chain calls
+            A RouterResults containing the following:
+            * approval_teal (str): compiled approval program
+            * clear_teal (str): compiled clear-state program
+            * abi_contract (abi.Contract): a Python SDK Contract object to allow clients to make off-chain calls
+            * approval_sourcemap (PyTealSourceMap | None): source map results for approval program
+            * clear_sourcemap (PyTealSourceMap | None): source map results for clear-state program
         """
         approval_filename = approval_filename or f"{self.name}_approval.teal"
         clear_filename = clear_filename or f"{self.name}_clear.teal"
@@ -1290,6 +1302,38 @@ class Router:
                 annotate_teal_headers=input.annotate_teal_headers,
                 annotate_teal_concise=input.annotate_teal_concise,
             )
+
+        if input.with_sourcemaps:
+            # rerun the build and compilation without the source mapper
+            # and verify that the teal programs are the same
+            with self._cleaning_context(), sourcemapping_off_context():
+                assert NatalStackFrame.sourcemapping_is_off()
+
+                ap_wo, csp_wo, _ = self._build_program(
+                    version=input.version, optimize=input.optimize
+                )
+                input_wo = _RouterCompileInput(
+                    version=input.version,
+                    assemble_constants=input.assemble_constants,
+                    optimize=input.optimize,
+                    with_sourcemaps=False,
+                )
+                abundle_wo = input_wo.get_compilation(ap_wo)._compile_impl(
+                    with_sourcemap=False
+                )
+                csbundle_wo = input_wo.get_compilation(csp_wo)._compile_impl(
+                    with_sourcemap=False
+                )
+                _PyTealSourceMapper._validate_teal_identical(
+                    abundle.teal,
+                    abundle_wo.teal,
+                    msg="FATAL ERROR. Approval Program without sourcemaps (LEFT) differs from Approval Program with (RIGHT)",
+                )
+                _PyTealSourceMapper._validate_teal_identical(
+                    csbundle.teal,
+                    csbundle_wo.teal,
+                    msg="FATAL ERROR. Clear Program without sourcemaps (LEFT) differs from Clear Program with (RIGHT)",
+                )
 
         return _RouterBundle(
             approval_program=ap,

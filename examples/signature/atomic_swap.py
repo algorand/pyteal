@@ -18,7 +18,6 @@ def htlc(
     tmpl_hash_fn=Sha256,
     tmpl_timeout=timeout,
 ):
-
     fee_cond = Txn.fee() < Int(tmpl_fee)
     safety_cond = And(
         Txn.type_enum() == TxnType.Payment,

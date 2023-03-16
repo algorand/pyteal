@@ -30,11 +30,10 @@ from pyteal.ir import (
     TealPragma,
     TealSimpleBlock,
 )
-from pyteal.stack_frame import NatalStackFrame
+from pyteal.stack_frame import NatalStackFrame, sourcemapping_off_context
 from pyteal.types import TealType
 from pyteal.util import algod_with_assertion
 
-TComponents = TealComponent | TealPragma
 
 MAX_PROGRAM_VERSION = 8
 FRAME_POINTERS_VERSION = 8
@@ -169,45 +168,41 @@ def compileSubroutine(
     start, end = ast.__teal__(options)
     start.addIncoming()
     start.validateTree()
-    if currentSubroutine and end.ops:
-        end.ops[0]._sframes_container = currentSubroutine.declarations.get_declaration()
+    if currentSubroutine:
+        decl = currentSubroutine.get_declaration_by_option(options.use_frame_pointers)
+        if end.ops:
+            end.ops[0]._sframes_container = decl
 
-    if currentSubroutine and (
-        de := currentSubroutine.get_declaration_by_option(
-            options.use_frame_pointers
-        ).deferred_expr
-    ):
-        # this represents code that should be inserted before each retsub op
-        deferred_expr = cast(Expr, de)
+        if deferred_expr := decl.deferred_expr:
+            # this represents code that should be inserted before each retsub op
+            for block in TealBlock.Iterate(start):
+                if not any(op.getOp() == Op.retsub for op in block.ops):
+                    continue
 
-        for block in TealBlock.Iterate(start):
-            if not any(op.getOp() == Op.retsub for op in block.ops):
-                continue
+                if len(block.ops) != 1:
+                    # we expect all retsub ops to be in their own block at this point since
+                    # TealBlock.NormalizeBlocks has not yet been used
+                    raise TealInternalError(
+                        f"Expected retsub to be the only op in the block, but there are {len(block.ops)} ops"
+                    )
 
-            if len(block.ops) != 1:
-                # we expect all retsub ops to be in their own block at this point since
-                # TealBlock.NormalizeBlocks has not yet been used
-                raise TealInternalError(
-                    f"Expected retsub to be the only op in the block, but there are {len(block.ops)} ops"
-                )
+                # we invoke __teal__ here and not outside of this loop because the same block cannot be
+                # added in multiple places to the control flow graph
+                deferred_start, deferred_end = deferred_expr.__teal__(options)
+                deferred_start.addIncoming()
+                deferred_start.validateTree()
 
-            # we invoke __teal__ here and not outside of this loop because the same block cannot be
-            # added in multiple places to the control flow graph
-            deferred_start, deferred_end = deferred_expr.__teal__(options)
-            deferred_start.addIncoming()
-            deferred_start.validateTree()
+                # insert deferred blocks between the previous block(s) and this one
+                deferred_start.incoming = block.incoming
+                block.incoming = [deferred_end]
+                deferred_end.nextBlock = block
 
-            # insert deferred blocks between the previous block(s) and this one
-            deferred_start.incoming = block.incoming
-            block.incoming = [deferred_end]
-            deferred_end.nextBlock = block
+                for prev in deferred_start.incoming:
+                    prev.replaceOutgoing(block, deferred_start)
 
-            for prev in deferred_start.incoming:
-                prev.replaceOutgoing(block, deferred_start)
-
-            if block is start:
-                # this is the start block, replace start
-                start = deferred_start
+                if block is start:
+                    # this is the start block, replace start
+                    start = deferred_start
 
     start.validateTree()
 
@@ -292,11 +287,16 @@ class _FullCompilationBundle:
     def get_results(self) -> CompileResults:
         sourcemap: PyTealSourceMap | None = None
         if self.sourcemapper:
-            sourcemap = self.sourcemapper.get_sourcemap()
+            sourcemap = self.sourcemapper.get_sourcemap(self.teal)
+
         return CompileResults(self.teal, sourcemap)
 
 
 class Compilation:
+    """
+    A class that encapsulates the data needed to compile a PyTeal expression
+    """
+
     def __init__(
         self,
         ast: Expr,
@@ -306,6 +306,22 @@ class Compilation:
         assemble_constants: bool = False,
         optimize: OptimizeOptions | None = None,
     ):
+        """
+        Instantiate a Compilation object providing the necessary data to compile a PyTeal expression.
+
+        Args:
+            ast: The PyTeal expression to assemble
+            mode: The program's mode for execution. Either `Mode.Signature` or `Mode.Application`
+            version (optional):  The program version used to assemble the program. This will determine which
+                expressions and fields are able to be used in the program and how expressions compile to
+                TEAL opcodes. Defaults to 2 if not included.
+            assembleConstants (optional): When `True`, the compiler will produce a program with fully
+                assembled constants, rather than using the pseudo-ops `int`, `byte`, and `addr`. These
+                constants will be assembled in the most space-efficient way, so enabling this may reduce
+                the compiled program's size. Enabling this option requires a minimum program version of 3.
+                Defaults to `False`.
+            optimize (optional): `OptimizeOptions` that determine which optimizations will be applied.
+        """
         self.ast = ast
         self.mode = mode
         self.version = version
@@ -321,8 +337,40 @@ class Compilation:
         algod_client: AlgodClient | None = None,
         annotate_teal: bool = False,
         annotate_teal_headers: bool = False,
-        annotate_teal_concise: bool = True,
+        annotate_teal_concise: bool = False,
     ) -> CompileResults:
+        """Execute the compilation, producing a TEAL assembly along with other optional artifacts.
+
+        Args:
+            with_sourcemap (optional): When `True`, the compiler will produce a sourcemap that maps the
+                generated TEAL assembly back to the original PyTeal source code. Defaults to `False`.
+            teal_filename (optional): The filename to use in the sourcemap. Defaults to `None`.
+            pcs_in_sourcemap (optional): When `True`, the compiler will include the program counter in
+                relevant sourcemap artifacts. This requires an `AlgodClient` (see next param). Defaults to `False`.
+            algod_client (optional): An `AlgodClient` to use to fetch the program counter. Defaults to `None`.
+                When `pcs_in_sourcemap` is `True` and `algod_client` is not provided, the compiler will
+                assume that an Algorand Sandbox algod client is running on the default port (4001) and -if
+                this is not the case- will raise an exception.
+            annotate_teal (optional): When `True`, the compiler will produce a TEAL assembly with comments
+                that describe the PyTeal source code that generated each line of the assembly. Defaults to `False`.
+            annotate_teal_headers (optional): When `True` along with `annotate_teal` being `True`, a header
+                line with column names will be added at the top of the annotated teal. Defaults to `False`.
+            annotate_teal_concise (optional): When `True` along with `annotate_teal` being `True`, the compiler
+                will provide fewer columns in the annotated teal. Defaults to `False`.
+
+        Returns:
+            A `CompileResults` object with the following data:
+            * teal: the TEAL assembly
+            * sourcemap (optional): if `with_sourcemap` is `True`, the following source map data is provided:
+                * teal_filename (optional): the TEAL filename, if this was provided
+                * r3_sourcemap: an `R3SourceMap` object that maps the generated TEAL assembly back to the original PyTeal source code and conforms to the specs of the `Source Map Revision 3 Proposal <https://sourcemaps.info/spec.html>`_
+                * pc_sourcemap (optional): if `pcs_in_sourcemap` is `True`, a `PCSourceMap` object that maps the program counters assembled by the `AlgodClient` which was utilized in the compilation back to the TEAL assembly which was generated by the compiler. This conforms to the specs of the `Source Map Revision 3 Proposal <https://sourcemaps.info/spec.html>`_
+                * annotated_teal (optional): if `annotate_teal` is `True`, the TEAL assembly with comments that describe the PyTeal source code that generated each line of the assembly
+
+        Raises:
+            TealInputError: if an operation in ast is not supported by the supplied mode and version.
+            TealInternalError: if an internal error is encountered during compilation.
+        """
         return self._compile_impl(
             with_sourcemap=with_sourcemap,
             teal_filename=teal_filename,
@@ -343,30 +391,6 @@ class Compilation:
         annotate_teal_headers: bool = False,
         annotate_teal_concise: bool = True,
     ) -> _FullCompilationBundle:
-        """Compile a PyTeal expression into TEAL assembly.
-
-        TODO: this comment is out of date!!!
-
-        Args:
-            ast: The PyTeal expression to assemble.
-            mode: The mode of the program to assemble. Must be Signature or Application.
-            version (optional): The program version used to assemble the program. This will determine which
-                expressions and fields are able to be used in the program and how expressions compile to
-                TEAL opcodes. Defaults to 2 if not included.
-            assembleConstants (optional): When true, the compiler will produce a program with fully
-                assembled constants, rather than using the pseudo-ops `int`, `byte`, and `addr`. These
-                constants will be assembled in the most space-efficient way, so enabling this may reduce
-                the compiled program's size. Enabling this option requires a minimum program version of 3.
-                Defaults to false.
-            optimize (optional): OptimizeOptions that determine which optimizations will be applied.
-
-        Returns:
-            A TEAL assembly program compiled from the input expression.
-
-        Raises:
-            TealInputError: if an operation in ast is not supported by the supplied mode and version.
-            TealInternalError: if an internal error is encounter during compilation.
-        """
         if (
             not (MIN_PROGRAM_VERSION <= self.version <= MAX_PROGRAM_VERSION)
             or type(self.version) is not int
@@ -433,8 +457,8 @@ class Compilation:
         )
 
         subroutineLabels = resolveSubroutines(subroutineMapping)
-        components: list[TComponents] = flattenSubroutines(
-            subroutineMapping, subroutineLabels
+        components: list[TealComponent] = flattenSubroutines(
+            subroutineMapping, subroutineLabels, options
         )
 
         verifyOpsForVersion(components, options.version)
@@ -442,13 +466,12 @@ class Compilation:
 
         if self.assemble_constants:
             if self.version < 3:
-                # TODO: convert this to a `verifyProgramVersion()` call
                 raise TealInternalError(
                     f"The minimum program version required to enable assembleConstants is 3. The current version is {self.version}."
                 )
             components = createConstantBlocks(components)
 
-        components = [cast(TComponents, TealPragma(self.version))] + components  # T2PT0
+        components = [TealPragma(self.version)] + components  # T2PT0
         teal_chunks = [tl.assemble() for tl in components]
         teal_code = "\n".join(teal_chunks)
 
@@ -465,11 +488,13 @@ class Compilation:
         if not with_sourcemap:
             return full_cpb
 
+        # Below is purely for the source mapper:
+
         source_mapper = _PyTealSourceMapper(
             teal_chunks=teal_chunks,
             components=components,
             build=True,
-            teal_file=teal_filename,
+            teal_filename=teal_filename,
             include_pcs=pcs_in_sourcemap,
             algod=algod_client,
             annotate_teal=annotate_teal,
@@ -477,6 +502,25 @@ class Compilation:
             annotate_teal_concise=annotate_teal_concise,
         )
         full_cpb.sourcemapper = source_mapper
+
+        # run a second time without, and assert that the same teal is produced
+        with sourcemapping_off_context():
+            assert NatalStackFrame.sourcemapping_is_off()
+
+            # implicitly recursive call!!
+            teal_code_wo = compileTeal(
+                self.ast,
+                self.mode,
+                version=self.version,
+                assembleConstants=self.assemble_constants,
+                optimize=self.optimize,
+            )
+
+            _PyTealSourceMapper._validate_teal_identical(
+                teal_code_wo,
+                teal_code,
+                msg="FATAL ERROR. Program without sourcemaps (LEFT) differs from Program with (RIGHT)",
+            )
 
         return full_cpb
 
@@ -489,6 +533,28 @@ def compileTeal(
     assembleConstants: bool = False,
     optimize: OptimizeOptions | None = None,
 ) -> str:
+    """Compile a PyTeal expression into TEAL assembly.
+
+    Args:
+        ast: The PyTeal expression to assemble.
+        mode: The mode of the program to assemble. Must be Signature or Application.
+        version (optional): The program version used to assemble the program. This will determine which
+            expressions and fields are able to be used in the program and how expressions compile to
+            TEAL opcodes. Defaults to 2 if not included.
+        assembleConstants (optional): When true, the compiler will produce a program with fully
+            assembled constants, rather than using the pseudo-ops `int`, `byte`, and `addr`. These
+            constants will be assembled in the most space-efficient way, so enabling this may reduce
+            the compiled program's size. Enabling this option requires a minimum program version of 3.
+            Defaults to false.
+        optimize (optional): OptimizeOptions that determine which optimizations will be applied.
+
+    Returns:
+        A TEAL assembly program compiled from the input expression.
+
+    Raises:
+        TealInputError: if an operation in ast is not supported by the supplied mode and version.
+        TealInternalError: if an internal error is encountered during compilation.
+    """
     bundle = Compilation(
         ast,
         mode,

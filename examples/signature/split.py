@@ -24,7 +24,6 @@ def split(
     tmpl_min_pay=tmpl_min_pay,
     tmpl_timeout=tmpl_timeout,
 ):
-
     split_core = And(
         Txn.type_enum() == TxnType.Payment,
         Txn.fee() < tmpl_fee,

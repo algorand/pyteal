@@ -7,7 +7,6 @@ from .rps_helpers import program
 
 
 def approval_program():
-
     # locals
     local_opponent = Bytes("opponent")  # byteslice
     local_bet = Bytes("bet")  # uint64

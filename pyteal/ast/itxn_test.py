@@ -468,7 +468,6 @@ def test_InnerTxnBuilder_method_call(
     expected_expr: pt.Expr,
     expected_error: type[Exception],
 ):
-
     if expected_error is not None:
         with pytest.raises(expected_error):
             pt.InnerTxnBuilder.MethodCall(

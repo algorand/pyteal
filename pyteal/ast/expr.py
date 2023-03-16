@@ -17,8 +17,6 @@ class Expr(ABC):
 
         self.trace = traceback.format_stack()[0:-1]
         self.stack_frames: NatalStackFrame = NatalStackFrame()
-        # TODO: is this now obsolete?
-        # self._user_defined: bool | None = None
 
     def getDefinitionTrace(self) -> list[str]:
         return self.trace

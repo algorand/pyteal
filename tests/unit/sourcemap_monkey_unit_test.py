@@ -1,14 +1,9 @@
-"""
-This file monkey-patches ConfigParser in order to enable source mapping
-and test the results of source mapping various PyTeal apps.
-"""
-
-from configparser import ConfigParser
+from ast import FunctionDef
+from contextlib import contextmanager
 from pathlib import Path
 import pytest
 import sys
 from unittest import mock
-
 
 ALGOBANK = Path.cwd() / "examples" / "application" / "abi"
 
@@ -16,15 +11,17 @@ FIXTURES = Path.cwd() / "tests" / "unit" / "sourcemaps"
 
 
 @pytest.fixture
-def mock_ConfigParser():
-    patcher = mock.patch.object(ConfigParser, "getboolean", return_value=True)
-    patcher.start()
+def sourcemap_enabled():
+    from feature_gates import FeatureGates
+
+    previous = FeatureGates.sourcemap_enabled()
+    FeatureGates.set_sourcemap_enabled(True)
     yield
-    patcher.stop()
+    FeatureGates.set_sourcemap_enabled(previous)
 
 
 @pytest.fixture
-def context_StackFrame_keep_all_debugging():
+def StackFrame_keep_all_debugging():
     from pyteal.stack_frame import NatalStackFrame
 
     NatalStackFrame._keep_all_debugging = True
@@ -32,12 +29,22 @@ def context_StackFrame_keep_all_debugging():
     NatalStackFrame._keep_all_debugging = False
 
 
+@pytest.fixture
+def sourcemap_debug():
+    from feature_gates import FeatureGates
+
+    previous = FeatureGates.sourcemap_debug()
+    FeatureGates.set_sourcemap_debug(True)
+    yield
+    FeatureGates.set_sourcemap_debug(previous)
+
+
 @pytest.mark.skipif(
     sys.version_info < (3, 11),
     reason="Currently, this test only works in python 3.11 and above",
 )
 @pytest.mark.serial
-def test_r3sourcemap(mock_ConfigParser):
+def test_r3sourcemap(sourcemap_debug, sourcemap_enabled):
     from examples.application.abi.algobank import router
     from pyteal.ast.router import _RouterCompileInput
     from pyteal import OptimizeOptions
@@ -62,7 +69,7 @@ def test_r3sourcemap(mock_ConfigParser):
     r3sm = ptsm._cached_r3sourcemap
     assert r3sm
 
-    assert filename == r3sm.file
+    assert filename == r3sm.filename
     assert str(r3sm.source_root).startswith(str(Path.cwd()))
     assert list(range(len(r3sm.entries))) == [line for line, _ in r3sm.entries]
     assert all(c == 0 for _, c in r3sm.entries)
@@ -80,7 +87,7 @@ def test_r3sourcemap(mock_ConfigParser):
 
     assert "mappings" in r3sm_json
     assert (
-        "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"
+        "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"
         == r3sm_json["mappings"]
     )
 
@@ -106,7 +113,7 @@ def test_r3sourcemap(mock_ConfigParser):
 
 
 @pytest.mark.serial
-def test_reconstruct(mock_ConfigParser):
+def test_reconstruct(sourcemap_enabled):
     from examples.application.abi.algobank import router
     from pyteal.ast.router import _RouterCompileInput
     from pyteal import OptimizeOptions
@@ -134,13 +141,13 @@ def test_reconstruct(mock_ConfigParser):
 
 
 @pytest.mark.serial
-def test_mocked_config_for_frames(mock_ConfigParser):
-    config = ConfigParser()
-    assert config.getboolean("pyteal-source-mapper", "enabled") is True
+def test_feature_gate_for_frames(sourcemap_enabled):
+    from feature_gates import FeatureGates
+
+    assert FeatureGates.sourcemap_enabled() is True
     from pyteal.stack_frame import NatalStackFrame
 
     assert NatalStackFrame.sourcemapping_is_off() is False
-    assert NatalStackFrame.sourcemapping_is_off(_force_refresh=True) is False
 
 
 def make(x, y, z):
@@ -150,7 +157,7 @@ def make(x, y, z):
 
 
 @pytest.mark.serial
-def test_lots_o_indirection(mock_ConfigParser):
+def test_lots_o_indirection(sourcemap_enabled):
     import pyteal as pt
 
     e1 = pt.Seq(pt.Pop(make(1, 2, 3)), pt.Pop(make(4, 5, 6)), make(7, 8, 9))
@@ -166,7 +173,8 @@ def test_lots_o_indirection(mock_ConfigParser):
 
 @pytest.mark.serial
 def test_frame_info_is_right_before_core_last_drop_idx(
-    context_StackFrame_keep_all_debugging,
+    sourcemap_enabled,
+    StackFrame_keep_all_debugging,
 ):
     import pyteal as pt
     from pyteal.stack_frame import StackFrame
@@ -175,9 +183,9 @@ def test_frame_info_is_right_before_core_last_drop_idx(
 
     frame_infos = e1.stack_frames._frames
     last_drop_idx = 1
-    assert StackFrame._is_right_before_core(
+    assert StackFrame._frame_info_is_right_before_core(
         frame_infos[last_drop_idx].frame_info
-    ), "Uh oh! Something about NatalStackFrame has changed which puts in jeopardy Source Map functionality"
+    ), "Uh oh! Something about NatalStackFrame has changes which puts in jeopardy Source Map functionality"
 
 
 def router_static_abisubroutine(pt):
@@ -209,11 +217,19 @@ def router_static_abisubroutine(pt):
     return router
 
 
-SUCCESSFUL_SUBROUTINE_LINENO = 196
+SUCCESSFUL_SUBROUTINE_LINENO = 204
 
 
 @pytest.mark.serial
-def test_hybrid_w_offset(mock_ConfigParser):
+def test_hybrid_w_offset(sourcemap_debug, sourcemap_enabled):
+    from feature_gates import FeatureGates
+    from pyteal import stack_frame
+
+    assert FeatureGates.sourcemap_enabled() is True
+    assert FeatureGates.sourcemap_debug() is True
+    assert stack_frame.NatalStackFrame.sourcemapping_is_off() is False
+    assert stack_frame.NatalStackFrame._debugging() is True
+
     import pyteal as pt
 
     router = router_static_abisubroutine(pt)
@@ -233,7 +249,7 @@ def test_hybrid_w_offset(mock_ConfigParser):
     lbf = sourcemap._best_frames[-1]
     hwo = lbf._hybrid_w_offset()
     nsource = lbf.node_source()
-    code = lbf.code()
+    raw_code = lbf.raw_code()
     naive_line = lbf.frame_info.lineno
 
     # consistent across versions:
@@ -243,83 +259,112 @@ def test_hybrid_w_offset(mock_ConfigParser):
     # inconsistent between 3.10 and 3.11:
     if sys.version_info[:2] <= (3, 10):
         assert 0 == hwo[1]
-        assert "def set_foo(" == code
+        assert "def set_foo(" == raw_code
         assert SUCCESSFUL_SUBROUTINE_LINENO == naive_line
     else:
         assert 1 == hwo[1]
-        assert "@pt.ABIReturnSubroutine" == code
+        assert "@pt.ABIReturnSubroutine" == raw_code
         assert SUCCESSFUL_SUBROUTINE_LINENO - 1 == naive_line
+
+
+PyTealFrame_CASES = [
+    (
+        "some code",
+        False,
+        "some chunk",
+        ("some chunk", 0),
+    ),
+    (
+        "some code",
+        True,
+        "some chunk",
+        ("some chunk", 0),
+    ),
+    (
+        "first line",
+        True,
+        "first line and more\nsecond line",
+        ("first line and more", 0),
+    ),
+    (
+        "first line",
+        True,
+        "first line and more\ndef second line",
+        ("def second line", 1),
+    ),
+    (
+        "first line",
+        False,
+        None,
+        ("first line", 0),
+    ),
+    (
+        "first line",
+        True,
+        None,
+        ("first line", 0),
+    ),
+]
+
+
+@contextmanager
+def patch_pt_frame(code, is_funcdef, pt_chunk):
+    from pyteal.stack_frame import PyTealFrame
+
+    node = None
+    if is_funcdef:
+        node = FunctionDef(name="foo", body=[], decorator_list=[], returns=None)
+
+    frame = PyTealFrame(
+        frame_info="dummy frame_info", node=node, creator=None, full_stack=None
+    )
+    with mock.patch.object(frame, "raw_code", return_value=code), mock.patch.object(
+        frame, "node_source", return_value=pt_chunk
+    ):
+        yield frame
+
+
+@pytest.mark.parametrize("code, is_funcdef, pt_chunk, expected", PyTealFrame_CASES)
+def test_mock_hybrid_w_offset(code, is_funcdef, pt_chunk, expected):
+    with patch_pt_frame(code, is_funcdef, pt_chunk) as pt_frame:
+        assert expected == pt_frame._hybrid_w_offset()
+
+
+def test_tabulate_args_can_be_dictified():
+    from pyteal.compiler.sourcemap import _PyTealSourceMapper, TealMapItem
+
+    tmi = TealMapItem(
+        pt_frame=mock.MagicMock(),
+        teal_lineno=13,
+        teal_line="some teal line",
+        teal_component="some teal component",
+    )
+    all_cols = {v: v for v in _PyTealSourceMapper._tabulate_param_defaults.values()}
+    full_dict = tmi.asdict(**all_cols)
+    assert set(all_cols.keys()) == set(full_dict.keys())
 
 
 def assert_algobank_unparsed_as_expected(actual):
     expected = [
         (0, ("router._build_impl(rci)", 0)),
-        (
-            1,
-            (
-                "BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL))",
-                0,
-            ),
-        ),
-        (
-            2,
-            (
-                "BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL))",
-                0,
-            ),
-        ),
-        (
-            3,
-            (
-                "BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL))",
-                0,
-            ),
-        ),
-        (
-            4,
-            (
-                "BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL))",
-                0,
-            ),
-        ),
-        (
-            5,
-            (
-                "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
-                1,
-            ),
-        ),
-        (
-            6,
-            (
-                "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
-                1,
-            ),
-        ),
-        (
-            7,
-            (
-                "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
-                1,
-            ),
-        ),
-        (
-            8,
-            (
-                "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
-                1,
-            ),
-        ),
-        (9, ("def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:", 1)),
-        (10, ("def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:", 1)),
-        (11, ("def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:", 1)),
-        (12, ("def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:", 1)),
-        (13, ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1)),
-        (14, ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1)),
-        (15, ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1)),
-        (16, ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1)),
+        (1, ("router._build_impl(rci)", 0)),
+        (2, ("router._build_impl(rci)", 0)),
+        (3, ("router._build_impl(rci)", 0)),
+        (4, ("router._build_impl(rci)", 0)),
+        (5, ("router._build_impl(rci)", 0)),
+        (6, ("router._build_impl(rci)", 0)),
+        (7, ("router._build_impl(rci)", 0)),
+        (8, ("router._build_impl(rci)", 0)),
+        (9, ("router._build_impl(rci)", 0)),
+        (10, ("router._build_impl(rci)", 0)),
+        (11, ("router._build_impl(rci)", 0)),
+        (12, ("router._build_impl(rci)", 0)),
+        (13, ("router._build_impl(rci)", 0)),
+        (14, ("router._build_impl(rci)", 0)),
+        (15, ("router._build_impl(rci)", 0)),
+        (16, ("router._build_impl(rci)", 0)),
         (17, ("router._build_impl(rci)", 0)),
-        (18, ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1)),
+        (18, ("router._build_impl(rci)", 0)),
         (19, ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1)),
         (20, ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1)),
         (21, ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1)),

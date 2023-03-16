@@ -22,7 +22,6 @@ def periodic_payment(
     tmpl_rcv=tmpl_rcv,
     tmpl_timeout=tmpl_timeout,
 ):
-
     periodic_pay_core = And(
         Txn.type_enum() == TxnType.Payment,
         Txn.fee() < tmpl_fee,

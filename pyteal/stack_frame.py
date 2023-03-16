@@ -1,16 +1,26 @@
+from feature_gates import FeatureGates
+
 from ast import AST, FunctionDef, unparse
-from configparser import ConfigParser
+from contextlib import contextmanager
 from dataclasses import dataclass
 from enum import IntEnum
 from inspect import FrameInfo, stack
-from typing import Callable, Optional, cast
+from typing import Callable, Final, cast
 import os
 import re
 
 from executing import Source  # type: ignore
 
 
-@dataclass
+class SourceMapStackFramesError(RuntimeError):
+    def __init__(self, msg: str):
+        self.msg = msg
+
+    def __str__(self):
+        return self.msg
+
+
+@dataclass(frozen=True)
 class StackFrame:
     """
     StackFrame is an _internal_ PyTeal class and is
@@ -41,7 +51,7 @@ class StackFrame:
 
     Of special note, is the class variable `_internal_paths`.
     This is a whitelist of file patterns which signal to the logic
-    of method `_is_pyteal()` that a particular
+    of method `_frame_info_is_pyteal()` that a particular
     frame was _NOT_ created by the user.
 
     QUIRKS:
@@ -51,11 +61,11 @@ class StackFrame:
     """
 
     frame_info: FrameInfo
-    node: Optional[AST]
+    node: AST | None
     creator: "NatalStackFrame"
 
     # for debugging purposes:
-    full_stack: Optional[list[FrameInfo]] = None
+    full_stack: list[FrameInfo] | None = None
 
     @classmethod
     def _init_or_drop(
@@ -68,14 +78,9 @@ class StackFrame:
         """
         node = cast(AST | None, Source.executing(f.frame).node)
         frame = StackFrame(
-            f, node, creator, full_stack if NatalStackFrame._debug else None
+            f, node, creator, full_stack if NatalStackFrame._debugging() else None
         )
-        return frame if cls._not_py_crud(frame.frame_info) else None
-
-    def __repr__(self) -> str:
-        node = unparse(n) if (n := self.node) else None
-        context = "".join(cc) if (cc := (fi := self.frame_info).code_context) else None
-        return f"{node=}; {context=}; frame_info={fi}"
+        return frame if frame._not_py_crud() else None
 
     # TODO: when a source mapper is instantiated, it ought to survey
     # the user's project files and warn in the case that some file
@@ -99,11 +104,7 @@ class StackFrame:
     ]
     _internal_paths_re = re.compile("|".join(_internal_paths))
 
-    def as_pyteal_frame(
-        self,
-        rel_paths: bool = True,
-        parent: Optional["PyTealFrame"] | None = None,
-    ) -> "PyTealFrame":
+    def as_pyteal_frame(self) -> "PyTealFrame":
         """
         Downcast one level in the class hierarchy
         """
@@ -112,12 +113,12 @@ class StackFrame:
             node=self.node,
             creator=self.creator,
             full_stack=self.full_stack,
-            rel_paths=rel_paths,
-            parent=parent,
+            rel_paths=True,
+            parent=None,
         )
 
     @classmethod
-    def _is_right_before_core(cls, f: FrameInfo) -> bool:
+    def _frame_info_is_right_before_core(cls, f: FrameInfo) -> bool:
         # We keep this method around to be used in a test . Originally,
         # it was actually used in the __init__ method of StackFrame
         # to calculate `last_drop_idx`. However, as -at the time of writing-
@@ -125,32 +126,47 @@ class StackFrame:
         # this method was removed from the live calculation.
         return bool(code := f.code_context or []) and "NatalStackFrame" in "".join(code)
 
-    @classmethod
-    def _is_pyteal(cls, f: FrameInfo) -> bool:
-        return bool(cls._internal_paths_re.search(f.filename))
+    def _is_pyteal(self) -> bool:
+        return self._frame_info_is_pyteal(self.frame_info)
 
     @classmethod
-    def _is_pyteal_import(cls, f: FrameInfo) -> bool:
+    def _frame_info_is_pyteal(cls, f: FrameInfo) -> bool:
+        return bool(cls._internal_paths_re.search(f.filename))
+
+    def _is_pyteal_import(self) -> bool:
+        return self._frame_info_is_pyteal_import(self.frame_info)
+
+    @classmethod
+    def _frame_info_is_pyteal_import(cls, f: FrameInfo) -> bool:
         cc = f.code_context
         if not cc:
             return False
 
-        code = re.split(r"\s|\.", " ".join(cc))
+        code = "".join(cc).split()
         return "import" in code and "pyteal" in code
 
-    @classmethod
-    def _not_py_crud(cls, f: FrameInfo) -> bool:
+    def _not_py_crud(self) -> bool:
         """Hackery that depends on C-Python. Not sure how reliable."""
+        return self._frame_info_not_py_crud(self.frame_info)
+
+    @classmethod
+    def _frame_info_not_py_crud(cls, f: FrameInfo) -> bool:
         return bool(f.code_context) or not f.filename.startswith("<")
 
+    def __repr__(self) -> str:
+        node = unparse(n) if (n := self.node) else None
+        context = "".join(cc) if (cc := (fi := self.frame_info).code_context) else None
+        return f"{node=}; {context=}; frame_info={fi}"
+
     def compiler_generated(self) -> bool | None:
-        if self.creator._compiler_gen_DEPRECATED:
+        if self.creator._compiler_gen:
             return True
 
-        return self._frame_info_compiler_gen_DEPRECATEDerated(self.frame_info)
+        return self._frame_info_compiler_generated(self.frame_info)
 
+    # _frame_info_compiler_gen_DEPRECATEDerated ???
     @classmethod
-    def _frame_info_compiler_gen_DEPRECATEDerated(cls, f: FrameInfo) -> bool | None:
+    def _frame_info_compiler_generated(cls, f: FrameInfo) -> bool | None:
         if not (cc := f.code_context):
             return None  # we don't know / NA
 
@@ -168,31 +184,34 @@ class StackFrame:
         )
 
 
-def _sourcmapping_is_off() -> bool:
-    try:
-        config = ConfigParser()
-        config.read("pyteal.ini")
-        enabled = config.getboolean("pyteal-source-mapper", "enabled")
-        return not enabled
-    except Exception as e:
-        print(
-            f"""Turning off frame capture and disabling sourcemaps. 
-Could not read section (pyteal-source-mapper, enabled) of config "pyteal.ini": {e}"""
-        )
-    return True
+@contextmanager
+def sourcemapping_off_context():
+    """Context manager that turns off sourcemapping for the duration of the context"""
+    from feature_gates import FeatureGates
 
+    _sourcemap_before = FeatureGates.sourcemap_enabled()
+    _sourcemap_debug_before = FeatureGates.sourcemap_debug()
+    FeatureGates.set_sourcemap_enabled(False)
+    FeatureGates.set_sourcemap_debug(False)
+    assert (
+        NatalStackFrame.sourcemapping_is_off()
+    ), "Unexpected error. Please report to PyTeal team."
+    assert (
+        not NatalStackFrame._debugging()
+    ), "Unexpected error. Please report to PyTeal team."
 
-def _debug_frames() -> bool:
     try:
-        config = ConfigParser()
-        config.read("pyteal.ini")
-        return config.getboolean("pyteal-source-mapper", "debug")
-    except Exception as e:
-        print(
-            f"""Disabling `debug` status for sourcemaps. 
-Could not read section (pyteal-source-mapper, debug) of config "pyteal.ini": {e}"""
-        )
-    return False
+        yield
+
+    finally:
+        FeatureGates.set_sourcemap_debug(_sourcemap_debug_before)
+        FeatureGates.set_sourcemap_enabled(_sourcemap_before)
+        assert (
+            NatalStackFrame.sourcemapping_is_off() is not _sourcemap_before
+        ), "Unexpected error. Please report to PyTeal team."
+        assert (
+            NatalStackFrame._debugging() is _sourcemap_debug_before
+        ), "Unexpected error. Please report to PyTeal team."
 
 
 class NatalStackFrame:
@@ -209,32 +228,20 @@ class NatalStackFrame:
     the name is misleading.
     """
 
-    _no_stackframes: bool = _sourcmapping_is_off()
-    _debug: bool = _debug_frames()
     _keep_all_debugging = False
 
-    @classmethod
-    def sourcemapping_is_off(cls, _force_refresh: bool = False) -> bool:
-        """
-        The `_force_refresh` parameter, is mainly for test validation purposes.
-        It is discouraged for use in the wild because:
-        * Frames are useful in an "all or nothing" capacity. For example, in preparing
-            for a source mapping, it would be error prone to generate frames for
-            a subset of analyzed PyTeal
-        * Setting `_force_refresh = True` will cause a read from the file system every
-            time Frames are initialized and will result in significant performance degredation
-        """
-        if _force_refresh:
-            cls._no_stackframes = _sourcmapping_is_off()
+    @staticmethod
+    def sourcemapping_is_off() -> bool:
+        return not FeatureGates.sourcemap_enabled()  # type: ignore[attr-defined]
 
-        return cls._no_stackframes
+    @staticmethod
+    def _debugging() -> bool:
+        return FeatureGates.sourcemap_debug()  # type: ignore[attr-defined]
 
     def __init__(
         self,
     ):
-        self._compiler_gen_DEPRECATED: bool = False
-        self._pyteal_gen: bool = False
-        self._has_import: bool = False
+        self._compiler_gen_DEPRECATED: bool = False # TODO: is this _DEPRECATED right?
         self._frames: list[StackFrame] = []
 
         if self.sourcemapping_is_off():
@@ -244,9 +251,9 @@ class NatalStackFrame:
         full_stack = stack()
 
         # 2. discard frames whose filename begins with "<"
-        frame_infos = list(filter(StackFrame._not_py_crud, full_stack))
+        frame_infos = list(filter(StackFrame._frame_info_not_py_crud, full_stack))
 
-        def make_stack_frames(fis):
+        def _make_stack_frames(fis):
             return [
                 frame
                 for f in fis
@@ -254,7 +261,7 @@ class NatalStackFrame:
             ]
 
         if self._keep_all_debugging or len(frame_infos) <= 1:
-            self._frames = make_stack_frames(frame_infos)
+            self._frames = _make_stack_frames(frame_infos)
             return
 
         # 3. start the best frame search right after where NatalStackFrame() was constructed
@@ -263,45 +270,45 @@ class NatalStackFrame:
         i = 2  # formerly this was `last_drop_idx = 1; i = last_drop_idx + 1`
 
         # 4. fast forward the right bound until we're out of pyteal-library code
-        # This sets entry_idx to the first frame index which isn't pyteal
-        while i < len(frame_infos) and StackFrame._is_pyteal(frame_infos[i]):
+        # This sets last_keep_idx to the first frame index which isn't pyteal
+        while i < len(frame_infos) and StackFrame._frame_info_is_pyteal(frame_infos[i]):
             i += 1
-        entry_idx = i
+        last_keep_idx = i
 
         compiler_gateway_idx = -1
-        for i in range(entry_idx, -1, -1):
+        for i in range(last_keep_idx, -1, -1):
             if StackFrame._is_compilation_gateway(frame_infos[i]):
                 compiler_gateway_idx = i
                 break
 
         first_import_idx = -1
-        first_non_pyteal_idx = entry_idx
+        first_non_pyteal_idx = last_keep_idx
+
         # 5. if the pyteal-library exit point was an import, the expression was
         # generated by pyteal itself. So let's back up and look for a "# T2PT*" comment
         # which will give us a clue for what to do with this expression
-        if StackFrame._is_pyteal_import(frame_infos[entry_idx]):
-            first_import_idx = entry_idx
+        if StackFrame._frame_info_is_pyteal_import(frame_infos[last_keep_idx]):
+            first_import_idx = last_keep_idx
             found = False
             i = -1
-            for i in range(entry_idx - 1, -1, -1):
+            for i in range(last_keep_idx - 1, -1, -1):
                 if StackFrame._is_pyteal_import(frame_infos[i]):
                     first_import_idx = i
 
-                if StackFrame._frame_info_compiler_gen_DEPRECATEDerated(frame_infos[i]):
+                if StackFrame._frame_info_compiler_generated(frame_infos[i]):
                     found = True
                     break
 
             if found and i >= 0:
-                entry_idx = i
+                last_keep_idx = i
 
         # 6. Keep only the last frame in the list. We maintain _as_ a list
         # since in the case of `self._debug == True`, we'd like access to the full list.
         # TODO: this is likely obsolete since full_stack is available on the PyTealFrame object when debugging
-        deleteme = frame_infos[: entry_idx + 2]
-        frame_infos = frame_infos[entry_idx : entry_idx + 1]
+        frame_infos = frame_infos[last_keep_idx : last_keep_idx + 1]
 
         # 7. we finish by constructing a list[StackFrame] from our one remaining frame_info
-        self._frames = make_stack_frames(frame_infos)
+        self._frames = _make_stack_frames(frame_infos)
 
         if compiler_gateway_idx >= 0:
             self._pyteal_gen = True
@@ -329,20 +336,42 @@ class NatalStackFrame:
     def __len__(self) -> int:
         return len(self._frames)
 
-    def best(self) -> StackFrame:
-        """
-        Return the best guess as to the user-authored birthplace of the
-        associated StackFrame's
-        """
-        assert (
-            self._frames
-        ), f"expected to have some frames but currently {self._frames=}"
-        return self._frames[-1]
-
     def is_pyteal_static(self) -> bool:
         """WRONG! - gotta look at the frame before last!!!"""
         return StackFrame._is_pyteal_import(self.best().frame_info)
 
+    
+    def _best_frame(self) -> StackFrame:
+        """
+        Return the best guess as to the user-authored birthplace of the associated StackFrame's.
+        If self._frames is non-empty return the last frame in the stack trace.
+        Otherwise, raise a SourceMapStackFramesError.
+        """
+        if not self._frames:
+            raise SourceMapStackFramesError(
+                f"expected to have some frames but currently {self._frames=}"
+            )
+
+        return self._frames[-1]
+
+    def _best_frame_as_pyteal_frame(self) -> "PyTealFrame | None":
+        """
+        Return the best frame converted to a PyTealFrame, or None if there was an error.
+        """
+        try:
+            return self._best_frame().as_pyteal_frame()
+        except SourceMapStackFramesError as smsfe:
+            print(
+                f"""-------------------
+WARNING: Error retrieving the best frame for source mapping.
+This may occur because FeatureGates was imported and `FeatureGates.set_sourcemap_enabled(True)` called _AFTER_ pyteal was imported.
+error: {smsfe}
+"""
+            )
+        return None
+
+    # def __repr__(self) -> str:
+    #     return f"{'C' if self._compiler_gen else 'U'}{self._frames}"
     def __repr__(self) -> str:
         return f"{'C' if self._compiler_gen_DEPRECATED else 'U'}{self._frames}"
 
@@ -523,7 +552,7 @@ _PT_GEN = {
 }
 
 
-class PytealFrameStatus(IntEnum):
+class PyTealFrameStatus(IntEnum):
     """integer values indicate 'confidence' on a scale of 0 - 10"""
 
     MISSING = 0
@@ -577,14 +606,14 @@ class PyTealFrame(StackFrame):
         creator: NatalStackFrame,
         full_stack: list[FrameInfo] | None,
         rel_paths: bool = True,
-        parent: Optional["PyTealFrame"] | None = None,
+        parent: "PyTealFrame | None" = None,
     ):
         super().__init__(frame_info, node, creator, full_stack)
-        self.rel_paths = rel_paths
-        self.parent = parent
+        self.rel_paths: Final[bool] = rel_paths
+        self.parent: "Final[PyTealFrame | None]" = parent
 
         self._raw_code: str | None = None
-        self._status: PytealFrameStatus | None = None
+        self._status: PyTealFrameStatus | None = None
 
     def __repr__(self) -> str:
         """
@@ -605,16 +634,13 @@ class PyTealFrame(StackFrame):
             ]
         )
 
-    def spawn(self, other: "PyTealFrame", status: PytealFrameStatus) -> "PyTealFrame":
-        assert isinstance(other, PyTealFrame)
-
+    def clone(self, status: PyTealFrameStatus) -> "PyTealFrame":
         ptf = PyTealFrame(
-            frame_info=other.frame_info,
-            node=other.node,
-            creator=other.creator,
-            full_stack=other.full_stack,
-            rel_paths=other.rel_paths,
-            parent=self,
+            frame_info=self.frame_info,
+            node=self.node,
+            creator=self.creator,
+            full_stack=self.full_stack,
+            rel_paths=self.rel_paths,
         )
         ptf._status = status
 
@@ -656,7 +682,7 @@ class PyTealFrame(StackFrame):
         return naive_lineno + offset
 
     def column(self) -> int:
-        """Provide accurate column info when available. Or 0 when not."""
+        """Provide accurate 0-indexed column offset when available. Or 0 when not."""
         return self.node_col_offset() or 0
 
     def compiler_generated_reason(self) -> str | None:
@@ -701,14 +727,14 @@ class PyTealFrame(StackFrame):
         Attempt to unparse the node and return the most apropos line,
         together with its offset in comparison with its raw code.
         """
-        code = self.code()
+        raw_code = self.raw_code()
         node = self.node
         pt_chunk = self.node_source()
-        return self._hybrid_impl(code, node, pt_chunk)
+        return self._hybrid_impl(raw_code, node, pt_chunk)
 
     @classmethod
     def _hybrid_impl(
-        cls, code: str, node: Optional[AST], pt_chunk: str
+        cls, code: str, node: AST | None, pt_chunk: str
     ) -> tuple[str, int]:
         """
         Given a chunk of PyTeal `pt_chunk` represending a node's source,
@@ -738,45 +764,33 @@ class PyTealFrame(StackFrame):
                     if line.startswith("def"):
                         if code_idx >= 0:
                             offset = i - code_idx
-                        break
-                return pt_lines[i], offset
+                        return pt_lines[i], offset
+                if code_idx >= 0:
+                    return pt_lines[code_idx], 0
 
         return code, 0
 
-    def code(self) -> str:
-        """using _PT_GEN here is DEPRECATED"""
-        raw = self.raw_code()
-        if not self.compiler_generated():
-            return raw
-
-        for k, v in _PT_GEN.items():
-            if k in raw:
-                return f"{v}: {raw}"
-
-        return f"Unhandled # T2PT commentary: {raw}"
-
     # END OF VARIATIONS ON A THEME OF CODE
-
     def failed_ast(self) -> bool:
         return not self.node
 
-    def status_code(self) -> PytealFrameStatus:
+    def status_code(self) -> PyTealFrameStatus:
         if self._status is not None:
             return self._status
 
         if self.frame_info is None:
-            return PytealFrameStatus.MISSING
+            return PyTealFrameStatus.MISSING
 
         if self.node is None:
-            return PytealFrameStatus.MISSING_AST
+            return PyTealFrameStatus.MISSING_AST
 
         if self.compiler_generated():
-            return PytealFrameStatus.PYTEAL_GENERATED
+            return PyTealFrameStatus.PYTEAL_GENERATED
 
         if not self.raw_code():
-            return PytealFrameStatus.MISSING_CODE
+            return PyTealFrameStatus.MISSING_CODE
 
-        return PytealFrameStatus.COPACETIC
+        return PyTealFrameStatus.COPACETIC
 
     def status(self) -> str:
         return self.status_code().human()
@@ -788,12 +802,14 @@ class PyTealFrame(StackFrame):
         return getattr(self.node, "lineno", None) if self.node else None
 
     def node_col_offset(self) -> int | None:
+        """0-indexed BEGINNING column offset"""
         return getattr(self.node, "col_offset", None) if self.node else None
 
     def node_end_lineno(self) -> int | None:
         return getattr(self.node, "end_lineno", None) if self.node else None
 
     def node_end_col_offset(self) -> int | None:
+        """0-indexed ENDING column offset"""
         return getattr(self.node, "end_col_offset", None) if self.node else None
 
     def node_source_window(self) -> str:
@@ -815,7 +831,7 @@ class PyTealFrame(StackFrame):
             return "None"
 
         spaces = "\n\t\t\t"
-        short = f"<{self.code()}>{spaces}@{self.location()}"
+        short = f"<{self.raw_code()}>{spaces}@{self.location()}"
         if not verbose:
             return short
 

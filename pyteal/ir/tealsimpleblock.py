@@ -1,5 +1,3 @@
-from typing import List, Optional
-
 from pyteal.ir.tealblock import TealBlock
 from pyteal.ir.tealop import TealOp
 
@@ -7,16 +5,16 @@ from pyteal.ir.tealop import TealOp
 class TealSimpleBlock(TealBlock):
     """Represents a basic block of TealComponents in a graph that does not contain a branch condition."""
 
-    def __init__(self, ops: List[TealOp], root_expr: Optional["Expr"] = None) -> None:  # type: ignore
+    def __init__(self, ops: List[TealOp], root_expr: "Expr | None" = None) -> None:  # type: ignore
         super().__init__(ops, root_expr=root_expr)
-        self.nextBlock: Optional[TealBlock] = None
+        self.nextBlock: TealBlock | None = None
         self.visited = False
 
     def setNextBlock(self, block: TealBlock) -> None:
         """Set the block that follows this one."""
         self.nextBlock = block
 
-    def getOutgoing(self) -> List[TealBlock]:
+    def getOutgoing(self) -> list[TealBlock]:
         if self.nextBlock is None:
             return []
         return [self.nextBlock]

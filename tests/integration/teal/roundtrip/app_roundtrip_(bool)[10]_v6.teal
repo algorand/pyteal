@@ -1,11 +1,11 @@
 #pragma version 6
 txna ApplicationArgs 0
-store 2
-load 2
-callsub roundtripper_2
 store 1
-byte 0x151f7c75
 load 1
+callsub roundtripper_2
+store 0
+byte 0x151f7c75
+load 0
 concat
 log
 int 1
@@ -13,95 +13,98 @@ return
 
 // tuple_complement
 tuplecomplement_0:
-store 19
-load 19
+store 18
+load 18
 int 0
 getbit
-store 0
-load 0
-callsub boolcomp_3
-store 0
-byte 0x00
-int 0
-load 0
-setbit
 store 20
 load 20
+callsub boolcomp_3
+store 20
+byte 0x00
+int 0
+load 20
+setbit
+store 19
+load 19
 retsub
 
 // array_complement
 arraycomplement_1:
-store 7
-load 7
+store 6
+load 6
 int 1
 int 0
 *
 int 1
 extract3
-store 9
-load 7
+store 8
+load 6
 int 1
 int 1
 *
 int 1
 extract3
-store 10
-load 7
+store 9
+load 6
 int 1
 int 2
 *
 int 1
 extract3
-store 11
-load 7
+store 10
+load 6
 int 1
 int 3
 *
 int 1
 extract3
-store 12
-load 7
+store 11
+load 6
 int 1
 int 4
 *
 int 1
 extract3
-store 13
-load 7
+store 12
+load 6
 int 1
 int 5
 *
 int 1
 extract3
-store 14
-load 7
+store 13
+load 6
 int 1
 int 6
 *
 int 1
 extract3
-store 15
-load 7
+store 14
+load 6
 int 1
 int 7
 *
 int 1
 extract3
-store 16
-load 7
+store 15
+load 6
 int 1
 int 8
 *
 int 1
 extract3
-store 17
-load 7
+store 16
+load 6
 int 1
 int 9
 *
 int 1
 extract3
-store 18
+store 17
+load 8
+callsub tuplecomplement_0
+store 8
 load 9
 callsub tuplecomplement_0
 store 9
@@ -129,10 +132,9 @@ store 16
 load 17
 callsub tuplecomplement_0
 store 17
-load 18
-callsub tuplecomplement_0
-store 18
+load 8
 load 9
+concat
 load 10
 concat
 load 11
@@ -149,28 +151,26 @@ load 16
 concat
 load 17
 concat
-load 18
-concat
-store 8
-load 8
+store 7
+load 7
 retsub
 
 // round_tripper
 roundtripper_2:
-store 3
-load 3
+store 2
+load 2
 callsub arraycomplement_1
-store 5
-load 5
-callsub arraycomplement_1
-store 6
-load 3
-load 5
-concat
-load 6
-concat
 store 4
 load 4
+callsub arraycomplement_1
+store 5
+load 2
+load 4
+concat
+load 5
+concat
+store 3
+load 3
 retsub
 
 // bool_comp

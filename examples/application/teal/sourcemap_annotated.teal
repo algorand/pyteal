@@ -1,0 +1,39 @@
+// GENERATED TEAL       //    PYTEAL PATH    LINE    PYTEAL
+#pragma version 8       //    sourcemap.py   48      Compilation(approval_program, mode=Mode.Application, version=8).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True)
+byte "n:"               //                   34      pt.Bytes('n:')
+log                     //                           pt.Log(pt.Bytes('n:'))
+txna ApplicationArgs 0  //                   31      pt.Txn.application_args[0]
+log                     //                   35      pt.Log(arg0)
+byte "is_even(n):"      //                   36      pt.Bytes('is_even(n):')
+log                     //                           pt.Log(pt.Bytes('is_even(n):'))
+txna ApplicationArgs 0  //                   31      pt.Txn.application_args[0]
+btoi                    //                           pt.Btoi((arg0 := pt.Txn.application_args[0]))
+callsub iseven_0        //                   37      is_even(n)
+itob                    //                           pt.Itob(is_even(n))
+log                     //                           pt.Log(pt.Itob(is_even(n)))
+int 1                   //                   38      pt.Int(1)
+return                  //                   48      Compilation(approval_program, mode=Mode.Application, version=8).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True)
+                        //                   22      def is_even(i):
+// is_even              //
+iseven_0:               //
+proto 1 1               //
+frame_dig -1            //                   48      Compilation(approval_program, mode=Mode.Application, version=8).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True)
+int 0                   //                   24      pt.Int(0)
+==                      //                           i == pt.Int(0)
+bnz iseven_0_l4         //                           pt.If(i == pt.Int(0))
+frame_dig -1            //                   48      Compilation(approval_program, mode=Mode.Application, version=8).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True)
+int 1                   //                   26      pt.Int(1)
+==                      //                           i == pt.Int(1)
+bnz iseven_0_l3         //
+frame_dig -1            //                   48      Compilation(approval_program, mode=Mode.Application, version=8).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True)
+int 2                   //                   28      pt.Int(2)
+-                       //                           i - pt.Int(2)
+callsub iseven_0        //                           is_even(i - pt.Int(2))
+b iseven_0_l5           //                   26      pt.If(i == pt.Int(0)).Then(pt.Int(1)).ElseIf(i == pt.Int(1))
+iseven_0_l3:            //                           i == pt.Int(1)
+int 0                   //                   27      pt.Int(0)
+b iseven_0_l5           //                   48      Compilation(approval_program, mode=Mode.Application, version=8).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True)
+iseven_0_l4:            //                   24      pt.If(i == pt.Int(0))
+int 1                   //                   25      pt.Int(1)
+iseven_0_l5:            //                   26      pt.If(i == pt.Int(0)).Then(pt.Int(1)).ElseIf(i == pt.Int(1))
+retsub                  //                   22      def is_even(i):

@@ -35,7 +35,7 @@ bundle-docs: bundle-docs-clean
 check-generate-init:
 	python -m scripts.generate_init --check
 
-ALLPY = docs examples pyteal scripts tests *.py
+ALLPY = docs examples feature_gates pyteal scripts tests *.py
 black:
 	black --check $(ALLPY)
 
@@ -55,10 +55,10 @@ lint: black flake8 mypy sdist-check
 
 # Slow test which are fast enough on python 3.11+
 test-unit-slow: 
-	pytest -n auto tests/unit/sourcemap_constructs311_test.py -m serial
+	pytest tests/unit/sourcemap_constructs311_test.py -m serial
 
 test-unit-very-slow: 
-	pytest -n auto tests/unit/sourcemap_constructs_allpy_test.py -m serial
+	pytest tests/unit/sourcemap_constructs_allpy_test.py -m serial
 
 test-unit-async:
 	pytest -n auto --durations=10 pyteal tests/unit -m "not slow" -m "not serial"
@@ -125,4 +125,4 @@ coverage:
 	pytest --cov-report html --cov=pyteal
 
 sourcemap-coverage:
-	pytest --cov-report html --cov=pyteal.stack_frame --cov=pyteal.compiler.sourcemap --cov=pyteal.compiler.compiler  --dist=no  tests/unit/sourcemap_monkey_unit_test.py -m serial
+	pytest --cov-report html --cov=pyteal.stack_frame --cov=pyteal.compiler.sourcemap --cov=pyteal.compiler.compiler --dist=no tests/unit/sourcemap_monkey_unit_test.py -m serial

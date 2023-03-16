@@ -1,9 +1,10 @@
-import ast
 import bisect
 from collections import defaultdict
 from dataclasses import dataclass, field
+from difflib import unified_diff
 from functools import partial
 from itertools import count
+import re
 from typing import Any, Final, Literal, Mapping, OrderedDict, TypedDict, cast
 
 from tabulate import tabulate  # type: ignore
@@ -17,7 +18,7 @@ from pyteal.stack_frame import (
     PT_GENERATED,
     NatalStackFrame,
     PyTealFrame,
-    PytealFrameStatus,
+    PyTealFrameStatus,
 )
 from pyteal.util import algod_with_assertion
 
@@ -185,7 +186,7 @@ class R3SourceMap:
     (https://docs.google.com/document/d/1U1RGAehQwRypUTovF1KRlpiOFze0b-_2gc6fAH0KY0k/edit?hl=en_US&pli=1&pli=1)
     """
 
-    file: str | None
+    filename: str | None
     source_root: str | None
     entries: Mapping[tuple[int, int], "R3SourceMapping"]
     index: list[tuple[int, ...]] = field(default_factory=list)
@@ -206,8 +207,8 @@ class R3SourceMap:
 
     def __repr__(self) -> str:
         parts = []
-        if self.file is not None:
-            parts += [f"file={self.file!r}"]
+        if self.filename is not None:
+            parts += [f"file={self.filename!r}"]
         if self.source_root is not None:
             parts += [f"source_root={self.source_root!r}"]
         parts += [f"len={len(self.entries)}"]
@@ -393,8 +394,8 @@ class R3SourceMap:
         }
         if with_contents:
             encoded["sourcesContent"] = content
-        if self.file is not None:
-            encoded["file"] = self.file
+        if self.filename is not None:
+            encoded["file"] = self.filename
         if self.source_root is not None:
             encoded["sourceRoot"] = self.source_root
         return encoded  # type: ignore
@@ -422,7 +423,6 @@ _TEAL_LINE_NUMBER = "TL"
 _TEAL_COLUMN = "TC"
 _TEAL_COLUMN_END = "TCE"
 _TEAL_LINE = "Teal Line"
-_TABULATABLE_TEAL = "Tabulatable Teal"
 _PROGRAM_COUNTERS = "PC"
 _PYTEAL_HYBRID_UNPARSED = "PyTeal Hybrid Unparsed"
 _PYTEAL_NODE_AST_UNPARSED = "PyTeal AST Unparsed"
@@ -461,6 +461,7 @@ class TealMapItem(PyTealFrame):
         teal_line: str,
         teal_component: "pt.TealComponent",
         pcs: list[int] | None = None,
+        is_sentinel: bool = False,
     ):
         super().__init__(
             frame_info=pt_frame.frame_info,
@@ -470,96 +471,81 @@ class TealMapItem(PyTealFrame):
             rel_paths=pt_frame.rel_paths,
             parent=pt_frame.parent,
         )
-        self.teal_lineno: int = teal_lineno
-        self.teal_line: str = teal_line
-        self.teal_component: pt.TealComponent = teal_component
-        self.pcs_hydrated: bool = pcs is not None
-        self.pcs: list[int] | None = pcs if pcs else None
+        self.teal_lineno: Final[int] = teal_lineno
+        self.teal_line: Final[str] = teal_line
+        self.teal_component: Final[pt.TealComponent] = teal_component
+        self.pcs: Final[list[int] | None] = pcs if pcs else None
+        self.is_sentinel: Final[bool] = is_sentinel
 
-    def _hybrid_w_offset(self) -> tuple[str, int]:
-        """
-        Delegates to super except in the very special case that this is a Return()
-        """
-        if (
-            isinstance(self.teal_component.expr, pt.Return)
-            and isinstance(self.teal_component, pt.TealOp)
-            and (teal_op := cast(pt.TealOp, self.teal_component))
-            and teal_op.op is pt.Op.retsub
-        ):
-            node = self.node
-            is_return = False
-            while node and not (is_return := isinstance(node, ast.Return)):
-                node = getattr(node, "parent", None)
-
-            if node and is_return:
-                code = self.code()
-                pt_chunk = ast.unparse(node)
-                return self._hybrid_impl(code, node, pt_chunk)
-
-        return super()._hybrid_w_offset()
-
-    def pcs_repr(self, prefix: str = "", wrapper="({})") -> str:
-        if not (self.pcs_hydrated and self.pcs):
+    def pcs_repr(self, prefix: str = "") -> str:
+        if not self.pcs:
             return ""
-        return f"{prefix}{wrapper.format(self.pcs[0])}"
+        return f"{prefix}({self.pcs[0]})"
 
     def __repr__(self) -> str:
         P = " // "
-        return f"TealLine({self.teal_lineno}: {self.teal_line}{self.pcs_repr(prefix=P)} // PyTeal: {self._hybrid_w_offset()[0]}"
+        return f"TealLine({self.teal_lineno}: {self.teal_line}{self.pcs_repr(prefix=P)} // PyTeal: {self._hybrid_w_offset()[0]})"
+
+    def teal_column(self) -> int:
+        """Always returns 0 as the 0-index STARTING column offset"""
+        return 0
+
+    def teal_column_end(self) -> int:
+        """The 0-index ENDING column offset"""
+        return len(self.teal_line)
+
+    _dict_lazy_attrs = {
+        _TEAL_LINE_NUMBER: lambda tmi: tmi.teal_lineno,
+        _TEAL_LINE: lambda tmi: tmi.teal_line,
+        _TEAL_COLUMN: lambda tmi: tmi.teal_column(),
+        _TEAL_COLUMN_END: lambda tmi: tmi.teal_column_end(),
+        _PROGRAM_COUNTERS: lambda tmi: tmi.pcs_repr(),
+        _PYTEAL_HYBRID_UNPARSED: lambda tmi: tmi.hybrid_unparsed(),
+        _PYTEAL_NODE_AST_UNPARSED: lambda tmi: tmi.node_source(),
+        _PYTEAL_NODE_AST_QUALNAME: lambda tmi: tmi.code_qualname(),
+        _PYTEAL_COMPONENT: lambda tmi: tmi.teal_component,
+        _PYTEAL_NODE_AST_SOURCE_BOUNDARIES: lambda tmi: tmi.node_source_window(),
+        _PYTEAL_FILENAME: lambda tmi: tmi.file(),
+        _PYTEAL_LINE_NUMBER: lambda tmi: tmi.lineno(),
+        _PYTEAL_LINE_NUMBER_END: lambda tmi: tmi.node_end_lineno(),
+        _PYTEAL_COLUMN: lambda tmi: tmi.column(),
+        _PYTEAL_COLUMN_END: lambda tmi: tmi.node_end_col_offset(),
+        _PYTEAL_LINE: lambda tmi: tmi.raw_code(),
+        _PYTEAL_NODE_AST: lambda tmi: tmi.node,
+        _PYTEAL_NODE_AST_NONE: lambda tmi: tmi.failed_ast(),
+        _STATUS_CODE: lambda tmi: tmi.status_code(),
+        _STATUS: lambda tmi: tmi.status(),
+    }
 
     def asdict(self, **kwargs) -> OrderedDict[str, Any]:
         """kwargs serve as a rename mapping when present"""
-        attrs = {
-            _TEAL_LINE_NUMBER: self.teal_lineno,
-            _TEAL_LINE: self.teal_line,
-            _PROGRAM_COUNTERS: self.pcs_repr(),
-            _PYTEAL_HYBRID_UNPARSED: self.hybrid_unparsed(),
-            _PYTEAL_NODE_AST_UNPARSED: self.node_source(),
-            _PYTEAL_NODE_AST_QUALNAME: self.code_qualname(),
-            _PYTEAL_COMPONENT: self.teal_component,
-            _PYTEAL_NODE_AST_SOURCE_BOUNDARIES: self.node_source_window(),
-            _PYTEAL_FILENAME: self.file(),
-            _PYTEAL_LINE_NUMBER: self.lineno(),
-            _PYTEAL_LINE_NUMBER_END: self.node_end_lineno(),
-            _PYTEAL_COLUMN: self.column(),
-            _PYTEAL_COLUMN_END: self.node_end_col_offset(),
-            _PYTEAL_LINE: self.code(),
-            _PYTEAL_NODE_AST: self.node,
-            _PYTEAL_NODE_AST_NONE: self.failed_ast(),
-            _STATUS_CODE: self.status_code(),
-            _STATUS: self.status(),
-        }
-
         assert (
-            kwargs.keys() <= attrs.keys()
+            kwargs.keys() <= (attrs := self._dict_lazy_attrs).keys()
         ), f"unrecognized parameters {kwargs.keys() - attrs.keys()}"
 
-        return OrderedDict(((kwargs[k], attrs[k]) for k in kwargs))
+        return OrderedDict(((kwargs[k], attrs[k](self)) for k in kwargs))
 
     def validate_for_export(self) -> None:
         """
         Ensure providing necessary and unambiguous data before exporting.
         """
         if self.teal_lineno is None:
-            raise ValueError("unable to export without valid line number: None")
-        if (line := self.lineno()) is None or self.column() is None:
-            col = self.column()
-            raise ValueError(
-                f"unable to export without valid line and column for SOURCE but got: {line=}, {col=}"
-            )
+            raise ValueError("unable to export without valid target TEAL line number")
+        if self.lineno() is None:
+            raise ValueError("unable to export without valid target PyTEAL line number")
 
-    def source_mapping(self, _hybrid: bool = True) -> "R3SourceMapping":
+    def source_mapping(self) -> "R3SourceMapping":
         self.validate_for_export()
         return R3SourceMapping(
             line=cast(int, self.teal_lineno) - 1,
-            column=0,
-            column_end=len(self.teal_line) - 1,
+            column=self.teal_column(),
+            column_end=self.teal_column_end(),
             source=self.file(),
             source_line=cast(int, self.lineno()) - 1,
             source_column=self.column(),
             source_line_end=nel - 1 if (nel := self.node_end_lineno()) else None,
             source_column_end=self.node_end_col_offset(),
-            source_extract=self.hybrid_unparsed() if _hybrid else self.code(),
+            source_extract=self.hybrid_unparsed(),
             target_extract=self.teal_line,
         )
 
@@ -654,12 +640,15 @@ class _PyTealSourceMapper:
 
     """
 
+    UNEXPECTED_ERROR_SUFFIX = """This is an unexpected error. Please report this to the PyTeal team or create an issue at:
+    https://github.com/algorand/pyteal/issues"""
+
     def __init__(
         self,
         teal_chunks: list[str],
         components: list["pt.TealComponent"],
         *,
-        teal_file: str | None = None,
+        teal_filename: str | None = None,
         include_pcs: bool = False,
         algod: AlgodClient | None = None,
         build: bool = True,
@@ -674,7 +663,7 @@ class _PyTealSourceMapper:
                 of TEAL code generated by the PyTeal compiler
             components: TealComponent object in 1-to-1 correspondence with
                 `teal_chunks` and which generated the chunk in the PyTeal compiler
-            teal_file (optional): filename of TEAL source to be used in source mapping.
+            teal_filename (optional): filename of TEAL source to be used in source mapping.
                 This file isn't actually saved
             include_pcs (optional): specifies whether program counters
                 should be included in the map
@@ -697,6 +686,12 @@ class _PyTealSourceMapper:
                 algod, msg="Adding PC's to sourcemap requires live Algod"
             )
 
+        if not teal_chunks:
+            raise TealInternalError("Please provide non-empty teal_chunks")
+
+        if not components:
+            raise TealInternalError("Please provide non-empty components")
+
         self.teal_chunks: Final[list[str]] = teal_chunks
         self.components: Final[list["pt.TealComponent"]] = components
 
@@ -704,14 +699,16 @@ class _PyTealSourceMapper:
 
         self.include_pcs: bool = include_pcs
 
-        self.teal_file: str | None = teal_file
+        self.teal_filename: str | None = teal_filename
         self.verbose: bool = verbose
 
-        self._best_frames: list[PyTealFrame] = []
+        self._best_frames: list[PyTealFrame | None] = []
         self._cached_r3sourcemap: R3SourceMap | None = None
 
         self._cached_tmis: list[TealMapItem] = []
         self._cached_pc_sourcemap: PCSourceMap | None = None
+
+        self._most_recent_omit_headers: bool | None = None
 
         # FOR DEBUGGING PURPOSES ONLY:
         self._inferred_frames_at: list[int] = []
@@ -722,12 +719,27 @@ class _PyTealSourceMapper:
         self._annotated_teal: str | None = None
         if annotate_teal:
             self._annotated_teal = self.annotated_teal(
-                omit_headers=not annotate_teal_headers, concise=annotate_teal_concise
+                omit_headers=(oh := not annotate_teal_headers),
+                concise=annotate_teal_concise,
+            )
+            self._most_recent_omit_headers = oh
+
+    def get_sourcemap(self, teal_for_validation: str) -> PyTealSourceMap:
+        if not self._built():
+            raise self._unexpected_error("source map not built yet")
+
+        if self._annotated_teal:
+            if (oh := self._most_recent_omit_headers) is None:
+                raise self._unexpected_error(
+                    "_most_recent_omit_headers is None unexpectedly after calculating annotated_teal"
+                )
+
+            self._validate_annotated(
+                oh, teal_for_validation.splitlines(), self._annotated_teal.splitlines()
             )
 
-    def get_sourcemap(self):
         return PyTealSourceMap(
-            self.teal_file,
+            self.teal_filename,
             self._cached_r3sourcemap,
             self._cached_pc_sourcemap,
             self._annotated_teal,
@@ -748,6 +760,13 @@ class _PyTealSourceMapper:
             ]
         )
 
+    @classmethod
+    def _unexpected_error(cls, msg: str) -> TealInternalError:
+        return TealInternalError(
+            f"""{msg}
+        {cls.UNEXPECTED_ERROR_SUFFIX}"""
+        )
+
     def build(self) -> None:
         if self._built():
             return
@@ -760,12 +779,14 @@ class _PyTealSourceMapper:
         # assert teal_chunks <--1-to-1--> components
 
         if (n := len(self.teal_chunks)) != len(self.components):
-            raise TealInternalError(
-                f"expected same number of teal chunks {n} and components {len(self.components)}"
+            raise self._unexpected_error(
+                f"expected same number of teal chunks ({n}) and components ({len(self.components)})"
             )
 
         if n == 0:
-            raise TealInternalError("cannot generate empty source map: no components")
+            raise self._unexpected_error(
+                "cannot generate empty source map: no components"
+            )
 
         # PASS I. Deduce the Best Frame Candidate (BFC) from each individual `NatalStackFrame`
         # See NatalStackFrame.__init__() for steps 1-7 which happen when an Expr is created
@@ -774,12 +795,19 @@ class _PyTealSourceMapper:
         #   TO:   a PyTealFrame
         # overall resulting in a list[PyTealFrame]
         self._best_frames = [
-            tc.stack_frames().best().as_pyteal_frame() for tc in self.components
+            tc.stack_frames()._best_frame_as_pyteal_frame() for tc in self.components
         ]
 
+        if not self._best_frames:
+            raise self._unexpected_error(
+                f"This shouldn't have happened as we already checked! Check again: {len(self.components)=}"
+            )
+
+        # stand-in in the case of missing frames
+        sentinel_frame = self._best_frames[0]
         assert (
-            self._best_frames
-        ), f"This shouldn't have happened as we already checked! Check again: {len(self.components)=}"
+            sentinel_frame
+        ), "Abort source mapping as even the very first best frame is missing"
 
         # PASS II. Attempt to fill any "gaps" by inferring from adjacent BFC's
         self._best_frames, inferred = self._infer(self._best_frames)
@@ -796,20 +824,57 @@ class _PyTealSourceMapper:
                     pcs = pcsm.line_to_pc.get(lineno - 1, [])
                 self._cached_tmis.append(
                     TealMapItem(
-                        pt_frame=best_frame,
+                        pt_frame=best_frame or sentinel_frame,
                         teal_lineno=lineno,
                         teal_line=line,  # type: ignore
                         teal_component=self.components[i],
                         pcs=pcs,
+                        is_sentinel=(best_frame is None),
                     )
                 )
                 lineno += 1
 
         self._build_r3sourcemap()
 
-        if not NatalStackFrame._debug:
-            self._best_frames = []
-            self._inferred_frames_at = []
+        if not NatalStackFrame._debugging():
+            # cf. https://stackoverflow.com/questions/850795/different-ways-of-clearing-lists#answer-44349418
+            self._best_frames *= 0
+            self._inferred_frames_at *= 0
+
+        self._validate_build()
+
+    def _validate_build(self):
+        dechunked = [line for chunk in self.teal_chunks for line in chunk.splitlines()]
+
+        if (ld := len(dechunked)) != (ltmi := len(self._cached_tmis)):
+            raise self._unexpected_error(
+                f"teal chunks has {ld} teal lines which doesn't match the number of cached TealMapItem's ({ltmi})"
+            )
+
+        if (lr3 := len(r3_target_lines := self._cached_r3sourcemap.file_lines)) != ltmi:
+            raise self._unexpected_error(
+                f"there are {ltmi} TealMapItem's which doesn't match the number of file_lines in the cached R3SourceMap ({lr3})"
+            )
+
+        for i, line in enumerate(dechunked):
+            if line != (tmi_line := self._cached_tmis[i].teal_line):
+                raise self._unexpected_error(
+                    f"teal chunk lines don't match TealMapItem's at index {i}. ('{line}' v. '{tmi_line}')"
+                )
+            if tmi_line != (target_line := r3_target_lines[i]):
+                raise self._unexpected_error(
+                    f"TealMapItem's don't match R3SourceMap.file_lines at index {i}. ('{tmi_line}' v. '{target_line}')"
+                )
+
+        for tmi in self._cached_tmis:
+            if not tmi.is_sentinel:
+                continue
+            print(
+                f"""-----------------
+WARNING: Source mapping is unknown for the following:
+{tmi!r}
+"""
+            )
 
     def _build_r3sourcemap(self):
         assert self._cached_tmis, "Unexpected error: no cached TealMapItems found"
@@ -840,7 +905,7 @@ class _PyTealSourceMapper:
                 sources.append(f)
 
         self._cached_r3sourcemap = R3SourceMap(
-            file=self.teal_file,
+            filename=self.teal_filename,
             source_root=root,
             entries=entries,
             index=index,
@@ -864,24 +929,17 @@ class _PyTealSourceMapper:
         self._cached_pc_sourcemap = PCSourceMap(raw_sourcemap)
 
     def as_list(self) -> list[TealMapItem]:
-        # TODO: finer grained caching/building
         self.build()
         return self._cached_tmis
 
     def as_r3sourcemap(self) -> R3SourceMap | None:
-        # TODO: finer grained caching/building
         self.build()
         return self._cached_r3sourcemap
 
     @classmethod
     def _infer(
-        cls, best_frames: list[PyTealFrame]
-    ) -> tuple[list[PyTealFrame], list[int]]:
-        """
-        NOTE: strictly speaking, this is _NOT_ a pure function as some frames
-        become "parents" of babies born by PyTealFrame.spawn().
-        However, elements of `frames` are not replaced/rearranged/mutated.
-        """
+        cls, best_frames: list[PyTealFrame | None]
+    ) -> tuple[list[PyTealFrame | None], list[int]]:
         inferred = []
         frames = list(best_frames)
         N = len(frames)
@@ -895,9 +953,7 @@ class _PyTealSourceMapper:
             next_frame = None if N <= i + 1 else frames[i + 1]
             if prev_frame and next_frame:
                 if prev_frame == next_frame:
-                    return frame.spawn(
-                        prev_frame, PytealFrameStatus.PATCHED_BY_PREV_AND_NEXT
-                    )
+                    return prev_frame.clone(PyTealFrameStatus.PATCHED_BY_PREV_AND_NEXT)
 
                 # PT Generated TypeEnum's presumably happened because of setting an transaction
                 # field in the next step:
@@ -908,31 +964,31 @@ class _PyTealSourceMapper:
                     PT_GENERATED.BRANCH_LABEL,
                     PT_GENERATED.BRANCH,
                 ]:
-                    return frame.spawn(
-                        next_frame, PytealFrameStatus.PATCHED_BY_NEXT_OVERRIDE_PREV
+                    return next_frame.clone(
+                        PyTealFrameStatus.PATCHED_BY_NEXT_OVERRIDE_PREV
                     )
 
                 if reason == PT_GENERATED.FLAGGED_BY_DEV:
-                    return frame.spawn(
-                        prev_frame, PytealFrameStatus.PATCHED_BY_PREV_OVERRIDE_NEXT
+                    return prev_frame.clone(
+                        PyTealFrameStatus.PATCHED_BY_PREV_OVERRIDE_NEXT
                     )
 
                 # NO-OP otherwise:
                 return None
 
             if prev_frame and frame:
-                return frame.spawn(prev_frame, PytealFrameStatus.PATCHED_BY_PREV)
+                return prev_frame.clone(PyTealFrameStatus.PATCHED_BY_PREV)
 
             # TODO: We never get here because we have no trouble with the #pragma component
             # Either remove or make it useful
             if next_frame and frame:
-                return frame.spawn(next_frame, PytealFrameStatus.PATCHED_BY_NEXT)
+                return next_frame.clone(PyTealFrameStatus.PATCHED_BY_NEXT)
 
             return None
 
         for i in range(N):
             f = frames[i]
-            if f and f.status_code() <= PytealFrameStatus.PYTEAL_GENERATED:
+            if f and f.status_code() <= PyTealFrameStatus.PYTEAL_GENERATED:
                 ptf_or_none = infer_source(i)
                 if ptf_or_none:
                     inferred.append(i)
@@ -943,9 +999,8 @@ class _PyTealSourceMapper:
     def pure_teal(self) -> str:
         return "\n".join(tmi.teal_line for tmi in self.as_list())
 
-    _tabulate_param_defaults = dict(
+    _tabulate_param_defaults: Final[dict[str, str]] = dict(
         teal=_TEAL_LINE,
-        tabulatable_teal=_TABULATABLE_TEAL,
         pyteal_hybrid_unparsed=_PYTEAL_HYBRID_UNPARSED,
         pyteal=_PYTEAL_NODE_AST_UNPARSED,
         teal_line_number=_TEAL_LINE_NUMBER,
@@ -972,9 +1027,9 @@ class _PyTealSourceMapper:
         tablefmt="fancy_grid",
         numalign="right",
         omit_headers: bool = False,
-        omit_repeating_col_except: list[str] = [],
-        post_process_delete_cols: list[str] = [],
-        **kwargs,
+        omit_repeating_col_except: list[str] | None = None,
+        post_process_delete_cols: list[str] | None = None,
+        **kwargs: dict[str, str],
     ) -> str:
         """
         Tabulate a sourcemap using Python's tabulate package: https://pypi.org/project/tabulate/
@@ -982,36 +1037,83 @@ class _PyTealSourceMapper:
         Columns are named and ordered by the arguments provided
 
         Args:
-            tablefmt (defaults to 'fancy_grid'): format specifier used by tabulate. For choices see: https://github.com/astanin/python-tabulate#table-format
-            omit_headers (defaults to False): Explain this....
-            numalign ... explain this...
-            omit_repeating_col_except ... TODO: this is confusing. When empty, nothing is omitted. When non-empty, all reps other than this column are omitted
-            const_col_* ... explain this
-            teal: Column name and implicit order for the generated Teal
-            pyteal (optional): Column name and implicit order for the PyTeal source mapping to target (this usually contains only the Python AST responsible for the generated Teal)
-            pyteal_hybrid_unparsed (optional): ... explain
-            teal_line_number (optional): Column name and implicit order for the Teal target line number
-            teal_column (optional): Column name and implicit order for the generated Teal starting 0-based column number (defaults to 0 when unknown)
-            teal_column_end (optional): Column name and implicit order for the generated Teal ending 0-based column (defaults to len(code) - 1 when unknown)
-            program_counters (optional): Program counters assembled by algod
-            pyteal_component (optional): Column name and implicit order for the PyTeal source component mapping to target
-            pyteal_node_ast_qualname (optional): Column name and implicit order for the Python qualname of the PyTeal source mapping to target
-            pyteal_filename (optional): Column name and implicit order for the filename whose PyTeal source is mapping to the target
-            pyteal_line_number (optional): Column name and implicit order for starting line number of the PyTeal source mapping to target
-            pyteal_line_number_end (optional): Column name and implicit order for the ending line number of the PyTeal source mapping to target
-            pyteal_column (optional): Column name and implicit order for the PyTeal starting 0-based column number mapping to the target (defaults to 0 when unknown)
-            pyteal_column_end (optional): Column name and implicit order for the PyTeal ending 0-based column number mapping to the target (defaults to len(code) - 1 when unknown)
-            pyteal_line (optional): Column name and implicit order for the PyTeal source _line_ mapping to target (in general, this may only overlap with the PyTeal code which generated the Teal)
-            pyteal_node_ast_source_boundaries (optional): Column name and implicit order for line and column boundaries of the PyTeal source mapping to target
-            pyteal_node_ast_none (optional): Column name and implicit order for indicator of whether the AST node was extracted for the PyTEAL source mapping to target
-            status_code (optional): Column name and implicit order for confidence level for locating the PyTeal source responsible for generated Teal
-            status (optional): Column name and implicit order for descriptor of confidence level for locating the PyTeal source responsible for generated Teal
+            tablefmt (default 'fancy_grid'): format specifier used by tabulate.
+                For choices see: https://github.com/astanin/python-tabulate#table-format
+
+            numalign (default 'right'): alignment of numbers. Choices are 'left', 'right', 'decimal', 'center' or None.
+                See: https://github.com/astanin/python-tabulate#column-alignment
+
+            omit_headers (default `False`): Do not include the column headers when `True`
+
+            omit_repeating_col_except (default None): specify columns for which repetitions should be printed out.
+                The Teal source column and constant columns such as the comment "//" column are always repeated regardless of this setting
+
+            post_process_delete_cols (default None): Specify columns to delete after tabulation
+
+            **kwargs: Additional keyword arguments are passed to tabulate to represent desired columns.
+                The order of these columns as arguments determines the column order. These MUST conform to the following parameters:
+
+                teal (required): Teal target source code. This is the only mandatory column
+
+                const_col_[.*] (optional): specify any number of columns to be treated as constant and always repeated
+
+                pyteal_hybrid_unparsed (optional): PyTeal source via `executing.unparse` when available, or otherwise
+                    via `FrameInfo.code_condext`
+
+                pyteal (optional): PyTeal source via `executing.unparse` when available, or otherwise "" (empty string)
+
+                teal_line_number (optional): Teal target's line number (1-based)
+
+                teal_column (optional): Teal target's 0-indexed starting column (CURRENTLY THIS IS ALWAYS 0)
+
+                teal_column_end (optional): Teal target's 0-indexed right boundary column (CURRENTLY THIS IS len(teal))
+
+                program_counters (optional): starting program counter as assembled by algod
+
+                pyteal_component (optional): representation of the PyTeal source component mapping to target
+
+                pyteal_node_ast_qualname (optional): the Python qualname of the PyTeal source
+
+                pyteal_filename (optional): the filename of the PyTeal source
+
+                pyteal_line_number (optional): the PyTeal source's beginning line number
+
+                pyteal_line_number_end (optional): the PyTeal source's ending line number
+
+                pyteal_column (optional): the PyTeal source's starting 0-indexed column
+
+                pyteal_column_end (optional): the PyTeal source's ending 0-indexed boundary column
+
+                pyteal_line (optional): the PyTeal source as provided by `FrameInfo.code_context`
+
+                pyteal_node_ast_source_boundaries (optional): formatted representation of the PyTeal source's line and column boundaries. Eg "L17:5-L42:3"
+
+                pyteal_node_ast_none (optional): boolean indicator of whether the AST node was successfully extracted for the PyTeal source
+
+                status_code (optional): `PyTealFrameStatus` int value indicating confidence level for locating the PyTeal source responsible for generated Teal
+
+                status (optional): simlar to `status_code` but with a human readable string representation
 
         Returns:
             A ready to print string containing the table information.
         """
-        constant_columns = {}
 
+        assert (
+            "teal" in kwargs
+        ), "teal column must be specified, but 'teal' is missing in kwargs"
+
+        # 0. e.g. suppose:
+        #
+        # kwargs == dict(
+        #     teal                      =   "// TEAL",
+        #     const_col_2               =   "//",
+        #     pyteal_filename           =   "PATH",
+        #     pyteal_line_number        =   "LINE",
+        #     const_col_5               =   "|",
+        #     pyteal_hybrid_unparsed    =   "PYTEAL",
+        # )
+
+        constant_columns = {}
         new_kwargs = {}
         for i, (k, v) in enumerate(kwargs.items()):
             if k.startswith("const_col_"):
@@ -1019,11 +1121,43 @@ class _PyTealSourceMapper:
             else:
                 new_kwargs[k] = v
 
+        # 1. now we have:
+        #
+        # new_kwargs == dict(
+        #     teal                      =   "// TEAL",
+        #     pyteal_filename           =   "PATH",
+        #     pyteal_line_number        =   "LINE",
+        #     pyteal_hybrid_unparsed    =   "PYTEAL",
+        # )
+        #
+        # and
+        #
+        # constant_columns == {
+        #     1: "//",
+        #     4: "|",
+        # }
+
         for k in new_kwargs:
             assert k in self._tabulate_param_defaults, f"unrecognized parameter '{k}'"
 
+        # 2. now we know that all the provided keys were valid
+
         renames = {self._tabulate_param_defaults[k]: v for k, v in new_kwargs.items()}
+
+        # 3. now we have:
+        #
+        # renames == {
+        #     _TEAL_LINE:                 "// TEAL",
+        #     _PYTEAL_FILENAME:           "PATH",
+        #     _PYTEAL_LINE_NUMBER:        "LINE",
+        #     _PYTEAL_HYBRID_UNPARSED:    "PYTEAL",
+        # }
+
         rows = [teal_item.asdict(**renames) for teal_item in self.as_list()]
+
+        # 4. now we've populated the rows:
+        #
+        # rows == [ {_TEAL_LINE: 1, _PYTEAL_FILENAME: "foo.py", _PYTEAL_LINE_NUMBER: 79, _PYTEAL_HYBRID_UNPARSED: "Int(42)"}, ... ]
 
         if constant_columns:
 
@@ -1039,7 +1173,22 @@ class _PyTealSourceMapper:
                 return new_row
 
             rows = list(map(add_const_cols, rows))
+            # 5. now we've added the constant columns to the rows:
+            #
+            # rows == [ {_TEAL_LINE: 1, "_1": "//", _PYTEAL_FILENAME: "foo.py", _PYTEAL_LINE_NUMBER: 79, "_4": "|", _PYTEAL_HYBRID_UNPARSED: "Int(42)"}, ... ]
+            #                           ^^^^^^^^^^                                                       ^^^^^^^^^
+
             renames = add_const_cols(renames)
+            # 6. and we've added the constant columns at the required ordering to the renames as well:
+            #
+            # renames == {
+            #     _TEAL_LINE:                 "// TEAL",
+            #     "_1":                       "//",
+            #     _PYTEAL_FILENAME:           "PATH",
+            #     _PYTEAL_LINE_NUMBER:        "LINE",
+            #     "_4":                       "|",
+            #     _PYTEAL_HYBRID_UNPARSED:    "PYTEAL",
+            # }
 
         teal_col_name = renames[_TEAL_LINE]
         pt_simple_col_name = renames.get(_PYTEAL_COLUMN)
@@ -1080,12 +1229,15 @@ class _PyTealSourceMapper:
             rows = [rows[0]] + list(
                 map(lambda r_and_n: reduction(*r_and_n), zip(rows[:-1], rows[1:]))
             )
+            # 7. now we've removed repetitions of appropriate columns
 
-        for col in post_process_delete_cols:
-            col_name = renames.pop(col)
-            for row in rows:
-                if col_name in row:
-                    del row[col_name]
+        if post_process_delete_cols:
+            for col in post_process_delete_cols:
+                col_name = renames.pop(col)
+                for row in rows:
+                    if col_name in row:
+                        del row[col_name]  # type: ignore
+        # 8. now we've removed any columns requested for deletion
 
         calling_kwargs: dict[str, Any] = {"tablefmt": tablefmt, "numalign": numalign}
         if not omit_headers:
@@ -1094,6 +1246,29 @@ class _PyTealSourceMapper:
         return tabulate(rows, **calling_kwargs)
 
     def annotated_teal(self, omit_headers: bool = True, concise: bool = True) -> str:
+        """
+        Helper function that hardcodes various tabulate parameters to produce a
+        reasonably formatted annotated teal output.
+
+        In theory, the output can be compiled.
+
+        In practice the output maybe be very large and therefore unacceptable to Algod.
+
+        In such cases, you should use the original accompanying Teal compilation.
+        """
+        if not self._built():
+            raise ValueError(
+                "not ready for annotated_teal() because build() has yet to be called"
+            )
+
+        if not (r3sm := cast(R3SourceMap, self._cached_r3sourcemap)):
+            raise self._unexpected_error("R3SourceMap not available but should be")
+
+        if not (file_lines := cast(list[str], r3sm.file_lines)):
+            raise self._unexpected_error(
+                "_cached_r3sourcemap.file_lines not available but should be"
+            )
+
         teal_col = "// GENERATED TEAL"
         comment_col = "_1"
         kwargs = dict(
@@ -1116,4 +1291,47 @@ class _PyTealSourceMapper:
         kwargs["pyteal_node_ast_source_boundaries"] = "PYTEAL RANGE"
 
         kwargs["post_process_delete_cols"] = [_PYTEAL_NODE_AST_SOURCE_BOUNDARIES]
-        return self.tabulate(**kwargs)  # type: ignore
+        annotated = self.tabulate(**kwargs)  # type: ignore
+
+        self._validate_annotated(omit_headers, file_lines, annotated.splitlines())
+
+        return annotated
+
+    @classmethod
+    def _validate_annotated(
+        cls, omit_headers: bool, teal_lines: list[str], annotated_lines: list[str]
+    ):
+        header_delta = 1 - bool(omit_headers)
+        if (ltl := len(teal_lines)) + header_delta != (latl := len(annotated_lines)):
+            raise cls._unexpected_error(
+                f"mismatch between count of teal_lines ({ltl}) and annotated_lines ({latl}) for the case {omit_headers=}",
+            )
+
+        for i, (teal_line, annotated_line) in enumerate(
+            zip(teal_lines, annotated_lines[header_delta:])
+        ):
+            if not annotated_line.startswith(teal_line):
+                raise cls._unexpected_error(
+                    f"annotated teal ought to begin exactly with the teal line but line {i+1} [{annotated_line}] doesn't start with [{teal_line}]",
+                )
+            pattern = r"^\s*($|//.*)"
+            if not re.match(pattern, annotated_line[len(teal_line) :]):
+                raise cls._unexpected_error(
+                    f"annotated teal ought to begin exactly with the teal line followed by annotation in comments but line {i+1} [{annotated_line}] has non-commented out annotations"
+                )
+
+    @classmethod
+    def _validate_teal_identical(
+        cls,
+        original_teal: str,
+        new_teal: str,
+        msg: str,
+    ):
+        if original_teal == new_teal:
+            return
+
+        diff = list(unified_diff(original_teal.splitlines(), new_teal.splitlines()))
+        raise cls._unexpected_error(
+            f"""{msg}. Original teal differs with new: 
+    {''.join(diff)}"""
+        )

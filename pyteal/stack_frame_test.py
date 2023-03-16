@@ -9,14 +9,17 @@ def test_is_pyteal():
     FrameInfo.return_value = Mock()
 
     FrameInfo.return_value.filename = "not_pyteal.py"
-    assert not StackFrame._is_pyteal(FrameInfo())
+    sf = StackFrame(FrameInfo(), None, NatalStackFrame())
+    assert not sf._is_pyteal()
 
     FrameInfo.return_value.filename = "blahblah/pyteal/ir/blah"
-    assert StackFrame._is_pyteal(FrameInfo())
+    sf = StackFrame(FrameInfo(), None, NatalStackFrame())
+    assert sf._is_pyteal()
 
     FrameInfo.return_value.filename = "blahblah/pyteal/not_really..."
-    assert not StackFrame._is_pyteal(FrameInfo())
-
+    sf = StackFrame(FrameInfo(), None, NatalStackFrame())
+    assert not sf._is_pyteal()
+    
 
 def test_is_pyteal_import_and_is_pyteal_static_and_is_user_gen():
     FrameInfo = Mock()

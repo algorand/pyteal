@@ -1,13 +1,12 @@
 """
 This test would typically reside right next to `pyteal/compiler/sourcemap.py`.
 However, since the path `pyteal/compiler` is on the StackFrame._internal_paths
-blacklist, we need to move the test elsewhere to get reliable results.
+blacklist, we need to move the test elsewhere to obtain reliable results.
 """
 
 import ast
 import json
 import time
-from configparser import ConfigParser
 from pathlib import Path
 from unittest import mock
 
@@ -19,7 +18,7 @@ ALGOBANK = Path.cwd() / "examples" / "application" / "abi"
 
 
 @pytest.fixture
-def context_StackFrame_keep_all_debugging():
+def StackFrame_keep_all_debugging():
     from pyteal.stack_frame import NatalStackFrame
 
     NatalStackFrame._keep_all_debugging = True
@@ -27,15 +26,34 @@ def context_StackFrame_keep_all_debugging():
     NatalStackFrame._keep_all_debugging = False
 
 
+@pytest.fixture
+def sourcemap_enabled():
+    from feature_gates import FeatureGates
+
+    previous = FeatureGates.sourcemap_enabled()
+    FeatureGates.set_sourcemap_enabled(True)
+    yield
+    FeatureGates.set_sourcemap_enabled(previous)
+
+
+@pytest.fixture
+def sourcemap_disabled():
+    from feature_gates import FeatureGates
+
+    previous = FeatureGates.sourcemap_enabled()
+    FeatureGates.set_sourcemap_enabled(False)
+    yield
+    FeatureGates.set_sourcemap_enabled(previous)
+
+
 @pytest.mark.serial
-def test_frames(context_StackFrame_keep_all_debugging):
+def test_frames(sourcemap_enabled, StackFrame_keep_all_debugging):
     from pyteal.stack_frame import NatalStackFrame
 
-    originally = NatalStackFrame._no_stackframes
-    NatalStackFrame._no_stackframes = False
+    assert NatalStackFrame.sourcemapping_is_off() is False
 
     this_file, this_func = "sourcemap_test.py", "test_frames"
-    this_lineno, this_frame = 38, NatalStackFrame()._frames[1]
+    this_lineno, this_frame = 57, NatalStackFrame()._frames[1]
     code = (
         f"    this_lineno, this_frame = {this_lineno}, NatalStackFrame()._frames[1]\n"
     )
@@ -57,16 +75,12 @@ def test_frames(context_StackFrame_keep_all_debugging):
     assert isinstance(node.parent, ast.Attribute)  # type: ignore
     assert isinstance(node.parent.parent, ast.Subscript)  # type: ignore
 
-    NatalStackFrame._no_stackframes = originally
-
 
 @pytest.mark.serial
-def test_TealMapItem_source_mapping():
+def test_TealMapItem_source_mapping(sourcemap_enabled):
     from pyteal.stack_frame import NatalStackFrame
 
-    originally = NatalStackFrame._no_stackframes
-
-    NatalStackFrame._no_stackframes = False
+    assert NatalStackFrame.sourcemapping_is_off() is False
 
     import pyteal as pt
     from pyteal.compiler.sourcemap import TealMapItem
@@ -93,7 +107,7 @@ def test_TealMapItem_source_mapping():
     mock_source_lines[expr_line_offset] = expr_str
     source_files = ["sourcemap_test.py"]
     r3sm = R3SourceMap(
-        file="dohhh.teal",
+        filename="dohhh.teal",
         source_root="~",
         entries={(i, 0): tmi.source_mapping() for i, tmi in enumerate(tmis)},
         index=[(0,) for _ in range(3)],
@@ -101,7 +115,7 @@ def test_TealMapItem_source_mapping():
         source_files=source_files,
         source_files_lines=[mock_source_lines],
     )
-    expected_json = '{"version": 3, "sources": ["tests/unit/sourcemap_test.py"], "names": [], "mappings": "AAyEW;AAAY;AAAZ", "file": "dohhh.teal", "sourceRoot": "~"}'
+    expected_json = '{"version": 3, "sources": ["tests/unit/sourcemap_test.py"], "names": [], "mappings": "AAwFW;AAAY;AAAZ", "file": "dohhh.teal", "sourceRoot": "~"}'
 
     assert expected_json == json.dumps(r3sm.to_json())
 
@@ -114,8 +128,6 @@ def test_TealMapItem_source_mapping():
     # TODO: test various properties of r3sm_unmarshalled
 
     assert expected_json == json.dumps(r3sm_unmarshalled.to_json())
-
-    NatalStackFrame._no_stackframes = originally
 
 
 def compare_and_assert(file, actual):
@@ -147,31 +159,24 @@ def test_no_regression_with_sourcemap_as_configured_algobank():
 
 
 @pytest.mark.serial
-def test_no_regression_with_sourcemap_enabled_algobank():
+def test_no_regression_with_sourcemap_enabled_algobank(sourcemap_enabled):
     from pyteal.stack_frame import NatalStackFrame
 
-    originally = NatalStackFrame._no_stackframes
-    NatalStackFrame._no_stackframes = False
-
+    assert NatalStackFrame.sourcemapping_is_off() is False
     no_regressions_algobank()
-
-    NatalStackFrame._no_stackframes = originally
 
 
 @pytest.mark.serial
-def test_no_regression_with_sourcemap_disabled_algobank():
+def test_no_regression_with_sourcemap_disabled_algobank(sourcemap_disabled):
     from pyteal.stack_frame import NatalStackFrame
 
-    originally = NatalStackFrame._no_stackframes
-    NatalStackFrame._no_stackframes = True
+    assert NatalStackFrame.sourcemapping_is_off() is True
 
     no_regressions_algobank()
 
-    NatalStackFrame._no_stackframes = originally
-
 
 @pytest.mark.serial
-def test_sourcemap_fails_because_unconfigured():
+def test_sourcemap_fails_because_not_enabled():
     from examples.application.abi.algobank import router
     from pyteal import OptimizeOptions
     from pyteal.errors import SourceMapDisabledError
@@ -183,43 +188,236 @@ def test_sourcemap_fails_because_unconfigured():
             with_sourcemaps=True,
         )
 
-    assert "pyteal.ini" in str(smde.value)
+    assert """Cannot calculate Teal to PyTeal source map because stack frame discovery is turned off.
 
-
-@pytest.mark.serial
-def test_config():
-    from pyteal.stack_frame import NatalStackFrame
-
-    config = ConfigParser()
-    config.read([".flake8", "mypy.ini", "pyteal.ini"])
-
-    assert [
-        "flake8",
-        "mypy",
-        "mypy-semantic_version.*",
-        "mypy-pytest.*",
-        "mypy-algosdk.*",
-        "pyteal",
-        "pyteal-source-mapper",
-    ] == config.sections()
-
-    assert ["ignore", "per-file-ignores", "ban-relative-imports"] == config.options(
-        "flake8"
+    To enable source maps: import `from feature_gates import FeatureGates` and call `FeatureGates.set_sourcemap_enabled(True)`.""" in str(
+        smde.value
     )
 
-    assert ["enabled", "debug"] == config.options("pyteal-source-mapper")
 
-    assert config.getboolean("pyteal-source-mapper", "enabled") is False
-    assert NatalStackFrame.sourcemapping_is_off() is True
+def test_PyTealSourceMapper_validate_build_annotate():
+    from pyteal import TealInternalError
+    from pyteal.compiler.sourcemap import _PyTealSourceMapper
 
-    originally = NatalStackFrame._no_stackframes
-    NatalStackFrame._no_stackframes = False
+    # --- CONSTRUCTOR VALIDATIONS --- #
+    match = "Please provide non-empty teal_chunks"
+    with pytest.raises(TealInternalError, match=match):
+        _PyTealSourceMapper([], [], build=False, annotate_teal=False)
 
-    NatalStackFrame._no_stackframes = False
-    assert NatalStackFrame.sourcemapping_is_off() is False
-    assert NatalStackFrame.sourcemapping_is_off(_force_refresh=True) is True
+    match = "Please provide non-empty components"
+    with pytest.raises(TealInternalError, match=match):
+        _PyTealSourceMapper(["a chunk"], [], build=False, annotate_teal=False)
 
-    NatalStackFrame._no_stackframes = originally
+    # --- BUILD VALIDATIONS --- #
+    ptsm = _PyTealSourceMapper(
+        ["a chunk"], ["a component", "another"], build=False, annotate_teal=False
+    )
+
+    def full_match(s):
+        return f"""{s}
+        {_PyTealSourceMapper.UNEXPECTED_ERROR_SUFFIX}"""
+
+    match = full_match(
+        r"expected same number of teal chunks \(1\) and components \(2\)"
+    )
+    with pytest.raises(TealInternalError, match=match):
+        ptsm.build()
+
+    ptsm.teal_chunks = ptsm.components = []
+    match = full_match("cannot generate empty source map: no components")
+    with pytest.raises(TealInternalError, match=match):
+        ptsm.build()
+
+    teal_chunks = ["first line\nsecond line", "third line\nfourth line\nfifth line"]
+    teal = [
+        "first line",
+        "second line",
+        "third line",
+        "fourth line",
+        "fifth line",
+    ]
+    i = 0
+    for chunk in teal_chunks:
+        for line in chunk.splitlines():
+            assert teal[i] == line
+            i += 1
+
+    def mock_TealMapItem(s):
+        tmi = mock.Mock()
+        tmi.teal_line = s
+        return tmi
+
+    def mock_R3SourceMap(lines):
+        r3sm = mock.Mock()
+        r3sm.file_lines = lines
+        return r3sm
+
+    ptsm.teal_chunks = teal_chunks
+    ptsm._cached_tmis = [mock_TealMapItem(s) for s in teal]
+    ptsm._cached_r3sourcemap = mock_R3SourceMap(teal)
+
+    ptsm._validate_build()
+    ptsm.teal_chunks.append("sixth line")
+    match = full_match(
+        r"teal chunks has 6 teal lines which doesn't match the number of cached TealMapItem's \(5\)"
+    )
+    with pytest.raises(TealInternalError, match=match):
+        ptsm._validate_build()
+
+    ptsm._cached_tmis.append(mock_TealMapItem("sixth line"))
+    ptsm._cached_r3sourcemap.file_lines.append("sixth line")
+    ptsm._validate_build()
+
+    match = full_match(
+        r"teal chunks has 6 teal lines which doesn't match the number of cached TealMapItem's \(7\)"
+    )
+    ptsm._cached_tmis.append(mock_TealMapItem("seventh line"))
+    with pytest.raises(TealInternalError, match=match):
+        ptsm._validate_build()
+
+    del ptsm._cached_tmis[-1]
+    ptsm._validate_build()
+
+    ptsm._cached_tmis[-1] = mock_TealMapItem("NOT the sixth line")
+    match = full_match(
+        r"teal chunk lines don't match TealMapItem's at index 5. \('sixth line' v. 'NOT the sixth line'\)"
+    )
+    with pytest.raises(TealInternalError, match=match):
+        ptsm._validate_build()
+
+    ptsm._cached_tmis[-1] = mock_TealMapItem("sixth line")
+    ptsm._validate_build()
+
+    ptsm._cached_r3sourcemap.file_lines.append("seventh line")
+    match = full_match(
+        r"there are 6 TealMapItem's which doesn't match the number of file_lines in the cached R3SourceMap \(7\)"
+    )
+    with pytest.raises(TealInternalError, match=match):
+        ptsm._validate_build()
+
+    del ptsm._cached_r3sourcemap.file_lines[-1]
+    ptsm._validate_build()
+
+    ptsm._cached_r3sourcemap.file_lines[-1] = "NOT the sixth line"
+    match = full_match(
+        r"TealMapItem's don't match R3SourceMap.file_lines at index 5. \('sixth line' v. 'NOT the sixth line'\)"
+    )
+    with pytest.raises(TealInternalError, match=match):
+        ptsm._validate_build()
+
+    ptsm._cached_r3sourcemap.file_lines[-1] = "sixth line"
+    ptsm._validate_build()
+
+    # --- ANNOTATE VALIDATIONS --- #
+    annotated = [f"{teal}   // some other stuff{i}" for i, teal in enumerate(teal)]
+    omit_headers = True
+    ptsm._validate_annotated(omit_headers, teal, annotated)
+
+    omit_headers = False
+    match = full_match(
+        r"mismatch between count of teal_lines \(6\) and annotated_lines \(6\) for the case omit_headers=False"
+    )
+    with pytest.raises(TealInternalError, match=match):
+        ptsm._validate_annotated(omit_headers, teal, annotated)
+
+    annotated_w_headers = ["// some header"] + annotated
+    ptsm._validate_annotated(omit_headers, teal, annotated_w_headers)
+
+    omit_headers = True
+    match = full_match(
+        r"mismatch between count of teal_lines \(6\) and annotated_lines \(7\) for the case omit_headers=True"
+    )
+    with pytest.raises(TealInternalError, match=match):
+        ptsm._validate_annotated(omit_headers, teal, annotated_w_headers)
+
+    annotated_3 = annotated[3]
+    annotated[3] = "doesn't begin with the teal line"
+    match = full_match(
+        r"annotated teal ought to begin exactly with the teal line but line 4 \[doesn't begin with the teal line\] doesn't start with \[fourth line\]"
+    )
+    with pytest.raises(TealInternalError, match=match):
+        ptsm._validate_annotated(omit_headers, teal, annotated)
+
+    annotated[3] = annotated_3
+    ptsm._validate_annotated(omit_headers, teal, annotated)
+
+    annotated_w_headers[4] = "doesn't begin with the teal line"
+    omit_headers = False
+    with pytest.raises(TealInternalError, match=match):
+        ptsm._validate_annotated(omit_headers, teal, annotated_w_headers)
+
+    annotated_w_headers[4] = annotated_3
+    ptsm._validate_annotated(omit_headers, teal, annotated_w_headers)
+
+    omit_headers = True
+    annotated_2 = annotated[2]
+    annotated[2] = f"{teal[2]}   some other stuff not all // commented out"
+    match = full_match(
+        rf"annotated teal ought to begin exactly with the teal line followed by annotation in comments but line 3 \[{annotated[2]}\] has non-commented out annotations"
+    )
+    with pytest.raises(TealInternalError, match=match):
+        ptsm._validate_annotated(omit_headers, teal, annotated)
+
+    annotated[2] = annotated_2
+    ptsm._validate_annotated(omit_headers, teal, annotated)
+
+    omit_headers = False
+    annotated_w_headers[3] = f"{teal[2]}   some other stuff not all // commented out"
+    with pytest.raises(TealInternalError, match=match):
+        ptsm._validate_annotated(omit_headers, teal, annotated_w_headers)
+
+    annotated_w_headers[3] = annotated_2
+    ptsm._validate_annotated(omit_headers, teal, annotated_w_headers)
+
+    # --- ANNOTATE VALIDATIONS - SPECIAL CASE --- #
+    meth_sig = "deposit(pay,account)void"
+    special = f"method {meth_sig}      //    (30)"
+    teal.append(special)
+    annotated_w_headers.append(special)
+    ptsm._validate_annotated(omit_headers, teal, annotated_w_headers)
+
+
+def test_examples_sourcemap():
+    """
+    Test to ensure that examples/application/teal/sourcemap.py doesn't go stale
+    """
+    from examples.application.sourcemap import Compilation, Mode, program
+
+    examples = Path.cwd() / "examples" / "application" / "teal"
+
+    approval_program = program()
+
+    results = Compilation(approval_program, mode=Mode.Application, version=8).compile(
+        with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True
+    )
+
+    teal = examples / "sourcemap.teal"
+    annotated = examples / "sourcemap_annotated.teal"
+
+    with open(teal) as f:
+        assert f.read() == results.teal
+
+    with open(annotated) as f:
+        fixture = f.read().splitlines()
+        annotated = results.sourcemap.annotated_teal.splitlines()
+        for i, (f, a) in enumerate(zip(fixture, annotated)):
+            f_cols = f.split()
+            a_cols = a.split()
+            if f_cols == a_cols:
+                continue
+
+            if f_cols[-1] == "annotate_teal_headers=True)":
+                assert f_cols[:2] == a_cols[:2], f"index {i} doesn't match"
+                assert f_cols[-4:] == a_cols[-4:], f"index {i} doesn't match"
+                continue
+
+            # must differ because fixture repeats PYTEAL PATH so omits it
+            assert len(f_cols) == len(a_cols) - 1, f"index {i} doesn't match"
+
+            a_comment = a_cols.index("//")
+            assert f_cols == (
+                a_cols[: a_comment + 1] + a_cols[a_comment + 2 :]
+            ), f"index {i} doesn't match"
 
 
 @pytest.mark.skip(
@@ -318,7 +516,7 @@ def trial(func):
 
 @pytest.mark.skip(reason="Benchmarks are too slow to run every time")
 @pytest.mark.serial
-def test_time_benchmark_under_config():
+def test_time_benchmark_with_default_feature_gates():
     from pyteal.stack_frame import NatalStackFrame
 
     print(f"{NatalStackFrame.sourcemapping_is_off()=}")
@@ -330,9 +528,8 @@ def test_time_benchmark_under_config():
 
 
 @pytest.mark.skip(reason="Benchmarks are too slow to run every time")
-@mock.patch.object(ConfigParser, "getboolean", return_value=True)
 @pytest.mark.serial
-def test_time_benchmark_sourcemap_enabled(_):
+def test_time_benchmark_sourcemap_enabled(sourcemap_enabled):
     """
     UPSHOT: expect deterioration of (5 to 15)X when enabling source maps.
     """

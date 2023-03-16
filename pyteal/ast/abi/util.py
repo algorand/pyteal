@@ -414,7 +414,6 @@ def algosdk_from_annotation(t: type[T]) -> algosdk.abi.ABIType:
 
 
 def type_spec_from_algosdk(t: Union[algosdk.abi.ABIType, str]) -> TypeSpec:
-
     from pyteal.ast.abi.reference_type import ReferenceTypeSpecs
     from pyteal.ast.abi.transaction import TransactionTypeSpecs
 
