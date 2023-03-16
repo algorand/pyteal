@@ -21,7 +21,7 @@ def test_is_pyteal():
     assert not sf._is_pyteal()
 
 
-def test_is_pyteal_import_and_is_pyteal_static_and_is_user_gen():
+def test_frame_info_is_pyteal_import_and_is_pyteal_static_and_is_user_gen():
     FrameInfo = Mock()
     FrameInfo.return_value = Mock()
 
@@ -34,35 +34,35 @@ def test_is_pyteal_import_and_is_pyteal_static_and_is_user_gen():
         return ret_nsf
 
     FrameInfo.return_value.code_context = ["something random"]
-    assert not StackFrame._is_pyteal_import(fi := FrameInfo())
+    assert not StackFrame._frame_info_is_pyteal_import(fi := FrameInfo())
     # assert not mock_nsf(fi).is_pyteal_static()
 
     FrameInfo.return_value.code_context = ["from pyteal import something"]
-    assert StackFrame._is_pyteal_import(fi := FrameInfo())
+    assert StackFrame._frame_info_is_pyteal_import(fi := FrameInfo())
     # assert mock_nsf(fi).is_pyteal_static()
 
     FrameInfo.return_value.code_context = [
         "from pyteal import something, something_else"
     ]
-    assert StackFrame._is_pyteal_import(fi := FrameInfo())
+    assert StackFrame._frame_info_is_pyteal_import(fi := FrameInfo())
     # assert mock_nsf(fi).is_pyteal_static()
 
     FrameInfo.return_value.code_context = [
         "from pyteal.something import something_else"
     ]
-    assert StackFrame._is_pyteal_import(fi := FrameInfo())
+    assert StackFrame._frame_info_is_pyteal_import(fi := FrameInfo())
     # assert mock_nsf(fi).is_pyteal_static()
 
     FrameInfo.return_value.code_context = ["import pyteal.something"]
-    assert StackFrame._is_pyteal_import(fi := FrameInfo())
+    assert StackFrame._frame_info_is_pyteal_import(fi := FrameInfo())
     # assert mock_nsf(fi).is_pyteal_static()
 
     FrameInfo.return_value.code_context = ["import pyteal as pt"]
-    assert StackFrame._is_pyteal_import(fi := FrameInfo())
+    assert StackFrame._frame_info_is_pyteal_import(fi := FrameInfo())
     # assert mock_nsf(fi).is_pyteal_static()
 
     FrameInfo.return_value.code_context = ["foo = pyteal.Expr()"]
-    assert not StackFrame._is_pyteal_import(fi := FrameInfo())
+    assert not StackFrame._frame_info_is_pyteal_import(fi := FrameInfo())
     # assert not mock_nsf(fi).is_pyteal_static()
 
     FrameInfo.return_value.code_context = [
@@ -71,7 +71,7 @@ def test_is_pyteal_import_and_is_pyteal_static_and_is_user_gen():
         "    something_else",
         ")",
     ]
-    assert StackFrame._is_pyteal_import(fi := FrameInfo())  # noqa: F841
+    assert StackFrame._frame_info_is_pyteal_import(fi := FrameInfo())  # noqa: F841
     # assert mock_nsf(fi).is_pyteal_static()
 
 
@@ -82,20 +82,20 @@ def test_not_py_crud():
 
     FrameInfo.return_value.code_context = ["something random"]
     FrameInfo.return_value.filename = "not_pycrud.py"
-    assert StackFrame._not_py_crud(FrameInfo())
+    assert StackFrame._frame_info_not_py_crud(FrameInfo())
 
     FrameInfo.return_value.code_context = []
     FrameInfo.return_value.filename = "not_pycrud.py"
-    assert StackFrame._not_py_crud(FrameInfo())
+    assert StackFrame._frame_info_not_py_crud(FrameInfo())
 
     FrameInfo.return_value.code_context = ["something random"]
     FrameInfo.return_value.filename = "<pycrud.py>"
-    assert StackFrame._not_py_crud(FrameInfo())
+    assert StackFrame._frame_info_not_py_crud(FrameInfo())
 
     FrameInfo.return_value.code_context = []
     FrameInfo.return_value.filename = "<pycrud.py>"
-    assert not StackFrame._not_py_crud(FrameInfo())
+    assert not StackFrame._frame_info_not_py_crud(FrameInfo())
 
     FrameInfo.return_value.code_context = None
     FrameInfo.return_value.filename = "<pycrud.py>"
-    assert not StackFrame._not_py_crud(FrameInfo())
+    assert not StackFrame._frame_info_not_py_crud(FrameInfo())

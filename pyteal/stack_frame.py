@@ -133,6 +133,7 @@ class StackFrame:
     def _frame_info_is_pyteal(cls, f: FrameInfo) -> bool:
         return bool(cls._internal_paths_re.search(f.filename))
 
+    @classmethod
     def _is_pyteal_import(self) -> bool:
         return self._frame_info_is_pyteal_import(self.frame_info)
 
@@ -142,11 +143,10 @@ class StackFrame:
         if not cc:
             return False
 
-        code = "".join(cc).split()
+        code = re.split(r"\s|\.", " ".join(cc))
         return "import" in code and "pyteal" in code
 
     def _not_py_crud(self) -> bool:
-        """Hackery that depends on C-Python. Not sure how reliable."""
         return self._frame_info_not_py_crud(self.frame_info)
 
     @classmethod
@@ -291,7 +291,7 @@ class NatalStackFrame:
             found = False
             i = -1
             for i in range(last_keep_idx - 1, -1, -1):
-                if StackFrame._is_pyteal_import(frame_infos[i]):
+                if StackFrame._frame_info_is_pyteal_import(frame_infos[i]):
                     first_import_idx = i
 
                 if StackFrame._frame_info_compiler_generated(frame_infos[i]):

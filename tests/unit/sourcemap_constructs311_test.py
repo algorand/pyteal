@@ -107,7 +107,7 @@ def abi_method_return_example(pt):
     )
 
 
-def router_example_method(pt):
+def router_method_example(pt):
     on_completion_actions = pt.BareCallActions(
         opt_in=pt.OnCompleteAction.call_only(pt.Log(pt.Bytes("optin call"))),
     )
@@ -1655,7 +1655,7 @@ CONSTRUCTS = [
         dict(frame_pointers=True),
     ),
     (  # 37 - Router (scratch slots)
-        router_example_method,
+        router_method_example,
         [
             [P, R],
             ("txn NumAppArgs", BCAs),
@@ -1725,7 +1725,7 @@ CONSTRUCTS = [
         dict(frame_pointers=False),
     ),
     (  # 38 - Router (frame pointers)
-        router_example_method,
+        router_method_example,
         [
             [P, R],
             ("txn NumAppArgs", BCAs),
