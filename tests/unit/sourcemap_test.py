@@ -6,8 +6,8 @@ blacklist, we need to move the test elsewhere to obtain reliable results.
 
 import ast
 import json
-import time
 from pathlib import Path
+import time
 from unittest import mock
 
 import pytest
