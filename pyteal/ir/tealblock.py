@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from typing import Dict, List, Optional, Tuple, Set, Iterator, cast, TYPE_CHECKING
+from typing import Dict, List, Tuple, Set, Iterator, cast, TYPE_CHECKING
 
 from pyteal.ir.tealop import TealOp, Op
 from pyteal.errors import TealCompileError

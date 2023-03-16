@@ -475,58 +475,6 @@ def test_BareCallActions_get_method_config():
     )
 
 
-def test_BareCallActions_aslist():
-    no_action = pt.OnCompleteAction()
-    optin_action = pt.OnCompleteAction(action=pt.Int(1), call_config=pt.CallConfig.ALL)
-    update_action = pt.OnCompleteAction(
-        action=pt.Int(2), call_config=pt.CallConfig.CALL
-    )
-
-    bca = pt.BareCallActions(
-        update_application=update_action,
-        opt_in=optin_action,
-    )
-
-    bcal = bca.aslist()
-    assert bcal == [
-        no_action,
-        no_action,
-        no_action,
-        no_action,
-        optin_action,
-        update_action,
-    ]
-
-
-def test_BareCallActions_get_method_config():
-    from pyteal.ast.router import MethodConfig, CallConfig
-
-    cc_all, cc_call, cc_create = (
-        pt.CallConfig.ALL,
-        pt.CallConfig.CALL,
-        pt.CallConfig.CREATE,
-    )
-    optin_action = pt.OnCompleteAction(action=pt.Int(1), call_config=cc_all)
-    noop_action = pt.OnCompleteAction(action=pt.Int(2), call_config=cc_call)
-    update_action = pt.OnCompleteAction(action=pt.Int(3), call_config=cc_create)
-
-    bca = pt.BareCallActions(
-        update_application=update_action,
-        opt_in=optin_action,
-        no_op=noop_action,
-    )
-
-    mc = bca.get_method_config()
-    assert mc == MethodConfig(
-        close_out=CallConfig.NEVER,
-        delete_application=CallConfig.NEVER,
-        no_op=cc_call,
-        opt_in=cc_all,
-        update_application=cc_create,
-        clear_state=CallConfig.NEVER,
-    )
-
-
 def test_router_register_method_clear_state_failure():
     router = pt.Router("doomedToFail")
 

@@ -24,7 +24,7 @@ from pyteal.ast.subroutine import (
     OutputKwArgInfo,
     Subroutine,
     SubroutineCall,
-    SubroutineDefinition
+    SubroutineDefinition,
     SubroutineFnWrapper,
 )
 from pyteal.ast.txn import Txn
@@ -262,15 +262,6 @@ class BareCallActions:
         cond = Cond(*[[n.condition, n.branch] for n in conditions_n_branches])
         cond.stack_frames = self.stack_frames
         return cond
-
-    def get_method_config(self) -> MethodConfig:
-        return MethodConfig(
-            no_op=self.no_op.call_config,
-            opt_in=self.opt_in.call_config,
-            close_out=self.close_out.call_config,
-            update_application=self.update_application.call_config,
-            delete_application=self.delete_application.call_config,
-        )
 
     def get_method_config(self) -> MethodConfig:
         return MethodConfig(
@@ -622,7 +613,7 @@ class ASTBuilder:
                 f"{wrap_to_name} ABIReturnSubroutine is not routable "
                 f"got {handler.subroutine.argument_count()} args with {len(handler.subroutine.abi_args)} ABI args."
             )
-        
+
         ret_expr, subdef = (
             ASTBuilder.__de_abify_subroutine_frame_pointers(handler)
             if use_frame_pt
@@ -863,7 +854,9 @@ class _RouterBundle:
         approval_sourcemap: PyTealSourceMap | None = None
         clear_sourcemap: PyTealSourceMap | None = None
         if self.approval_sourcemapper:
-            approval_sourcemap = self.approval_sourcemapper.get_sourcemap(self.approval_teal)
+            approval_sourcemap = self.approval_sourcemapper.get_sourcemap(
+                self.approval_teal
+            )
         if self.clear_sourcemapper:
             clear_sourcemap = self.clear_sourcemapper.get_sourcemap(self.clear_teal)
 

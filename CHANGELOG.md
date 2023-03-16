@@ -19,8 +19,6 @@
 
 * Improved error handling for tuple type mismatch: added information on position and expected type. ([#655](https://github.com/algorand/pyteal/pull/655))
 * Added an `asdict()` method to `ast.router.BareCallActions`. ([#656](https://github.com/algorand/pyteal/pull/656))
-* Added frame pointer support for router. ([#600](https://github.com/algorand/pyteal/pull/600))
- * NOTE: a backwards incompatable change was imposed in this PR: previous `build_program` method in `Router` was exported and public, now this method is hidden. Use `compile_program` only.
 
 ## Fixed
 
