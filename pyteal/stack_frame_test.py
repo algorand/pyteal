@@ -30,19 +30,26 @@ def test_file():
 
     FrameInfo.return_value.filename = "not_pyteal.py"
     ptf = PyTealFrame(FrameInfo(), None, NatalStackFrame(), None)
+    assert ptf._file is None
     assert ptf.file() == "not_pyteal.py"
+    assert ptf._file == "not_pyteal.py"
 
     from_root = "/Users/AMAZINGalgodev/github/algorand/beaker/beaker/"
     FrameInfo.return_value.filename = from_root + "client/application_client.py"
     ptf = PyTealFrame(FrameInfo(), None, NatalStackFrame(), None)
-    assert ptf.file().endswith(
+    assert ptf._file is None
+    ending = (
         "../AMAZINGalgodev/github/algorand/beaker/beaker/client/application_client.py"
     )
+    assert ptf.file().endswith(ending)
+    assert ptf._file == ptf.file()
 
     with patch("os.path.relpath", return_value="FOOFOO"):
         FrameInfo.return_value.filename = from_root + "client/application_client.py"
         ptf = PyTealFrame(FrameInfo(), None, NatalStackFrame(), None)
+        assert ptf._file is None
         assert ptf.file() == "FOOFOO"
+        assert ptf._file == "FOOFOO"
 
 
 def test_root():
@@ -50,5 +57,7 @@ def test_root():
     FrameInfo.return_value = Mock()
     ptf = PyTealFrame(FrameInfo(), None, NatalStackFrame(), None)
 
+    assert ptf._root is None
     with patch("os.getcwd", return_value="FOOFOO"):
         assert ptf.root() == "FOOFOO"
+        assert ptf._root == "FOOFOO"
