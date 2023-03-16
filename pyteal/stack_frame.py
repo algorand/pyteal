@@ -500,6 +500,8 @@ class PyTealFrame(StackFrame):
 
         self._raw_code: str | None = None
         self._status: PyTealFrameStatus | None = None
+        self._file: str | None = None
+        self._root: str | None = None
 
     def __repr__(self) -> str:
         """
@@ -536,18 +538,20 @@ class PyTealFrame(StackFrame):
         return f"{self.file()}:{self.lineno()}" if self.frame_info else ""
 
     def file(self) -> str:
-        if not self.frame_info:
-            return ""
+        if self._file is None:
+            if not self.frame_info:
+                self._file = ""
+            else:
+                path = self.frame_info.filename
+                self._file = os.path.relpath(path) if self.rel_paths else path
 
-        path = self.frame_info.filename
-        return os.path.relpath(path) if self.rel_paths else path
+        return self._file
 
     def root(self) -> str:
-        if not self.frame_info:
-            return ""
+        if self._root is None:
+            self._root = os.getcwd()
 
-        path = self.frame_info.filename
-        return path[: -len(self.file())]
+        return self._root
 
     def code_qualname(self) -> str:
         return (
