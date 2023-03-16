@@ -242,6 +242,8 @@ class NatalStackFrame:
         self,
     ):
         self._compiler_gen_DEPRECATED: bool = False  # TODO: is this _DEPRECATED right?
+        self._pyteal_gen: bool = False
+        self._has_import: bool = False
         self._frames: list[StackFrame] = []
 
         if self.sourcemapping_is_off():

@@ -1892,7 +1892,7 @@ CONSTRUCTS = [
             ("", "def fib(n) -> pt.Expr:"),
             ("// fib", "def fib(n) -> pt.Expr:"),
             ("fib_0:", "def fib(n) -> pt.Expr:"),
-            ("store 0", C),
+            ("store 0", "def fib(n) -> pt.Expr:"),
             ("load 0", C),
             ("int 1", "pt.Int(1)"),
             ("<=", "n <= pt.Int(1)"),
