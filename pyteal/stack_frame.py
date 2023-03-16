@@ -543,11 +543,7 @@ class PyTealFrame(StackFrame):
         return os.path.relpath(path) if self.rel_paths else path
 
     def root(self) -> str:
-        if not self.frame_info:
-            return ""
-
-        path = self.frame_info.filename
-        return path[: -len(self.file())]
+        return os.getcwd()
 
     def code_qualname(self) -> str:
         return (
