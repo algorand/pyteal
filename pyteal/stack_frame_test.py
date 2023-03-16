@@ -1,8 +1,11 @@
 from unittest.mock import Mock, patch
 
+import pytest
+
 from pyteal.stack_frame import NatalStackFrame, PyTealFrame, StackFrame
 
 
+@pytest.mark.serial
 def test_is_pyteal():
     FrameInfo = Mock()
     FrameInfo.return_value = Mock()
@@ -20,6 +23,7 @@ def test_is_pyteal():
     assert not sf._is_pyteal()
 
 
+@pytest.mark.serial
 def test_file():
     FrameInfo = Mock()
     FrameInfo.return_value = Mock()
