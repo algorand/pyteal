@@ -70,8 +70,8 @@ return                            //
                                   //                                       21      def reset(account: Expr):
 // reset                          //
 reset_0:                          //
-store 0                           //    tests/unit/sourcemap_rps_test.py   53      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
-load 0                            //
+store 0                           //
+load 0                            //    tests/unit/sourcemap_rps_test.py   53      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
 byte "opponent"                   //    tests/teal/rps.py                  11      Bytes('opponent')
 byte ""                           //                                       23      Bytes('')
 app_local_put                     //                                               App.localPut(account, local_opponent, Bytes(''))
@@ -91,8 +91,8 @@ retsub                            //                                       21   
                                   //                                       30      def is_account_empty(account: Expr):
 // is_account_empty               //
 isaccountempty_1:                 //
-store 3                           //    tests/unit/sourcemap_rps_test.py   53      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
-load 3                            //
+store 3                           //
+load 3                            //    tests/unit/sourcemap_rps_test.py   53      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
 byte "opponent"                   //    tests/teal/rps.py                  11      Bytes('opponent')
 app_local_get                     //                                       33      App.localGet(account, local_opponent)
 byte ""                           //                                               Bytes('')
@@ -119,8 +119,8 @@ retsub                            //                                       30   
                                   //                                       41      def is_valid_play(play: Expr):
 // is_valid_play                  //
 isvalidplay_2:                    //
-store 1                           //    tests/unit/sourcemap_rps_test.py   53      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
-load 1                            //
+store 1                           //
+load 1                            //    tests/unit/sourcemap_rps_test.py   53      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
 extract 0 1                       //    tests/teal/rps.py                  44      Substring(play, Int(0), Int(1))
 store 2                           //                                               first_ch.store(Substring(play, Int(0), Int(1)))
 load 2                            //                                       47      first_ch.load()
@@ -138,8 +138,8 @@ retsub                            //                                       41   
                                   //                                       55      def play_value(p: Expr):
 // play_value                     //
 playvalue_3:                      //
-store 8                           //    tests/unit/sourcemap_rps_test.py   53      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
-load 8                            //
+store 8                           //
+load 8                            //    tests/unit/sourcemap_rps_test.py   53      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
 extract 0 1                       //    tests/teal/rps.py                  58      Substring(p, Int(0), Int(1))
 store 9                           //                                               first_letter.store(Substring(p, Int(0), Int(1)))
 load 9                            //                                       61      first_letter.load()
@@ -168,9 +168,9 @@ retsub                            //                                       55   
                                   //                                       69      def get_winner_account_index(challanger_play: Expr, opponent_play: Expr):
 // get_winner_account_index       //
 getwinneraccountindex_4:          //
-store 11                          //    tests/unit/sourcemap_rps_test.py   53      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
+store 11                          //
 store 10                          //
-load 10                           //
+load 10                           //    tests/unit/sourcemap_rps_test.py   53      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
 load 11                           //
 ==                                //    tests/teal/rps.py                  72      challanger_play == opponent_play
 bnz getwinneraccountindex_4_l6    //
@@ -204,9 +204,9 @@ retsub                            //                                       69   
                                   //                                       85      def send_reward(account_index: Expr, amount: Expr):
 // send_reward                    //
 sendreward_5:                     //
-store 13                          //    tests/unit/sourcemap_rps_test.py   53      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
+store 13                          //
 store 12                          //
-itxn_begin                        //    tests/teal/rps.py                  87      InnerTxnBuilder.Begin()
+itxn_begin                        //                                       87      InnerTxnBuilder.Begin()
 int pay                           //                                       88      InnerTxnBuilder.SetFields({TxnField.type_enum: TxnType.Payment, TxnField.receiver: Txn.accounts[account_index], TxnField.amount: amount})
 itxn_field TypeEnum               //
 load 12                           //    tests/unit/sourcemap_rps_test.py   53      Compilation(approval_program(), Mode.Application, version=6).compile(with_sourcemap=True, annotate_teal=True, annotate_teal_headers=True, annotate_teal_concise=False)
