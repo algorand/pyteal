@@ -32,7 +32,7 @@ from pyteal.compiler.sourcemap import PyTealSourceMap, _PyTealSourceMapper
 from pyteal.config import METHOD_ARG_NUM_CUTOFF
 from pyteal.errors import AlgodClientError, TealInputError, TealInternalError
 from pyteal.ir.ops import Mode
-from pyteal.stack_frame import NatalStackFrame, sourcemapping_off_context
+from pyteal.stack_frame import NatalStackFrame
 from pyteal.types import TealType
 from pyteal.util import algod_with_assertion
 
@@ -1242,38 +1242,6 @@ class Router:
                 annotate_teal_headers=input.annotate_teal_headers,
                 annotate_teal_concise=input.annotate_teal_concise,
             )
-
-        if input.with_sourcemaps:
-            # rerun the build and compilation without the source mapper
-            # and verify that the teal programs are the same
-            with self._cleaning_context(), sourcemapping_off_context():
-                assert NatalStackFrame.sourcemapping_is_off()
-
-                ap_wo, csp_wo, _ = self._build_program(
-                    version=input.version, optimize=input.optimize
-                )
-                input_wo = _RouterCompileInput(
-                    version=input.version,
-                    assemble_constants=input.assemble_constants,
-                    optimize=input.optimize,
-                    with_sourcemaps=False,
-                )
-                abundle_wo = input_wo.get_compilation(ap_wo)._compile_impl(
-                    with_sourcemap=False
-                )
-                csbundle_wo = input_wo.get_compilation(csp_wo)._compile_impl(
-                    with_sourcemap=False
-                )
-                _PyTealSourceMapper._validate_teal_identical(
-                    abundle.teal,
-                    abundle_wo.teal,
-                    msg="FATAL ERROR. Approval Program without sourcemaps (LEFT) differs from Approval Program with (RIGHT)",
-                )
-                _PyTealSourceMapper._validate_teal_identical(
-                    csbundle.teal,
-                    csbundle_wo.teal,
-                    msg="FATAL ERROR. Clear Program without sourcemaps (LEFT) differs from Clear Program with (RIGHT)",
-                )
 
         return _RouterBundle(
             approval_program=ap,
