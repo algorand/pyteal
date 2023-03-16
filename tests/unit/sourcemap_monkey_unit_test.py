@@ -222,7 +222,7 @@ def router_static_abisubroutine(pt):
     return router
 
 
-SUCCESSFUL_SUBROUTINE_LINENO = 207
+SUCCESSFUL_SUBROUTINE_LINENO = 209
 
 
 @pytest.mark.serial
