@@ -87,7 +87,7 @@ def test_r3sourcemap(sourcemap_debug, sourcemap_enabled):
 
     assert "mappings" in r3sm_json
     assert (
-        "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"
+        "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"
         == r3sm_json["mappings"]
     )
 
@@ -347,24 +347,72 @@ def test_tabulate_args_can_be_dictified():
 def assert_algobank_unparsed_as_expected(actual):
     expected = [
         (0, ("router._build_impl(rci)", 0)),
-        (1, ("router._build_impl(rci)", 0)),
-        (2, ("router._build_impl(rci)", 0)),
-        (3, ("router._build_impl(rci)", 0)),
-        (4, ("router._build_impl(rci)", 0)),
-        (5, ("router._build_impl(rci)", 0)),
-        (6, ("router._build_impl(rci)", 0)),
-        (7, ("router._build_impl(rci)", 0)),
-        (8, ("router._build_impl(rci)", 0)),
-        (9, ("router._build_impl(rci)", 0)),
-        (10, ("router._build_impl(rci)", 0)),
-        (11, ("router._build_impl(rci)", 0)),
-        (12, ("router._build_impl(rci)", 0)),
-        (13, ("router._build_impl(rci)", 0)),
-        (14, ("router._build_impl(rci)", 0)),
-        (15, ("router._build_impl(rci)", 0)),
-        (16, ("router._build_impl(rci)", 0)),
+        (
+            1,
+            (
+                "BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL))",
+                0,
+            ),
+        ),
+        (
+            2,
+            (
+                "BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL))",
+                0,
+            ),
+        ),
+        (
+            3,
+            (
+                "BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL))",
+                0,
+            ),
+        ),
+        (
+            4,
+            (
+                "BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL))",
+                0,
+            ),
+        ),
+        (
+            5,
+            (
+                "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                1,
+            ),
+        ),
+        (
+            6,
+            (
+                "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                1,
+            ),
+        ),
+        (
+            7,
+            (
+                "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                1,
+            ),
+        ),
+        (
+            8,
+            (
+                "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
+                1,
+            ),
+        ),
+        (9, ("def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:", 1)),
+        (10, ("def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:", 1)),
+        (11, ("def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:", 1)),
+        (12, ("def getBalance(user: abi.Account, *, output: abi.Uint64) -> Expr:", 1)),
+        (13, ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1)),
+        (14, ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1)),
+        (15, ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1)),
+        (16, ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1)),
         (17, ("router._build_impl(rci)", 0)),
-        (18, ("router._build_impl(rci)", 0)),
+        (18, ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1)),
         (19, ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1)),
         (20, ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1)),
         (21, ("def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:", 1)),
@@ -1056,8 +1104,8 @@ def assert_algobank_unparsed_as_expected(actual):
         (
             215,
             (
-                "def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:",
-                1,
+                "InnerTxnBuilder.SetFields({TxnField.type_enum: TxnType.Payment, TxnField.receiver: recipient.address(), TxnField.amount: amount.get(), TxnField.fee: Int(0)})",
+                0,
             ),
         ),
         (
