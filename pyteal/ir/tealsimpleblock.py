@@ -5,8 +5,8 @@ from pyteal.ir.tealop import TealOp
 class TealSimpleBlock(TealBlock):
     """Represents a basic block of TealComponents in a graph that does not contain a branch condition."""
 
-    def __init__(self, ops: list[TealOp], root_expr: "Expr | None" = None) -> None:  # type: ignore
-        super().__init__(ops, root_expr=root_expr)
+    def __init__(self, ops: list[TealOp]) -> None:
+        super().__init__(ops)
         self.nextBlock: TealBlock | None = None
         self.visited = False
 
