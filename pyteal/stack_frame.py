@@ -139,7 +139,7 @@ class StackFrame:
         This method is used to determine if a FrameInfo is associated to a pyteal import.
         It does so by splitting its joined code context on whitespace and periods.
         For example, the following joined code context
-            from pyteal.ast.abi import Uint64 as Positive
+            'from pyteal.ast.abi import Uint64 as Positive'
         becomes
             ['from', 'pyteal', 'ast', 'abi', 'import', 'Uint64', 'as', 'Positive']
         and we can verify that this is a pyteal import by checking that
