@@ -353,12 +353,27 @@ error: {smsfe}
     @classmethod
     def _walk_asts(
         cls,
-        func: Callable[["Expr"], bool],  # type: ignore[name-defined]
+        func: "Callable[[Expr], bool]",  # type: ignore[name-defined]
         *exprs: "Expr",  # type: ignore[name-defined]
-        force_root_apply: bool = True,
-        exit_on_user_defined: bool = False,
-        exit_when_stop_signal: bool = False,
+        skipping: bool = False,
     ) -> None:
+        """
+        General purpose, recursive Expr-AST visitor that applies logic to each visited Expr.
+
+        When skipping is False, apply `func` to each Expr and recurse to its children
+            as defined by the pattern-match.
+
+        When skipping is True:
+            * if the Expr is user defined, skip it and its children.
+            * if not user defined, apply `func` to the Expr. Based on the output of `func`:
+                * if True, skip the Expr and its children.
+                * if False, visit the Expr's children as defined by the pattern-match.
+
+        Args:
+            func: the vistor function to apply.
+            *exprs: Expr's to recursively visit.
+            skipping: see the logic above.
+        """
         from pyteal.ast import (
             Assert,
             BinaryExpr,
@@ -380,11 +395,14 @@ error: {smsfe}
         from pyteal.ast.return_ import ExitProgram
 
         for e in exprs:
-            if e.stack_frames.user_defined() and exit_on_user_defined:
-                continue
-
-            supported_type = True
             expr = cast(Expr, e)
+
+            if skipping:
+                if e.stack_frames.user_defined() or func(expr):
+                    continue
+            else:
+                func(expr)
+
             walker_args: list[Expr] = []
             match expr:
                 case Assert():
@@ -420,21 +438,10 @@ error: {smsfe}
                 case Int(), MethodSignature(), ScratchStackStore(), TxnaExpr():
                     pass
                 case _:
-                    supported_type = False
+                    pass
 
-            should_stop = True
-            if supported_type or force_root_apply:
-                should_stop = func(expr)
-            if exit_when_stop_signal and should_stop:
-                return
             if walker_args:
-                cls._walk_asts(
-                    func,
-                    *walker_args,
-                    force_root_apply=force_root_apply,
-                    exit_on_user_defined=exit_on_user_defined,
-                    exit_when_stop_signal=exit_when_stop_signal,
-                )
+                cls._walk_asts(func, *walker_args, skipping=skipping)
 
     @classmethod
     def _debug_asts(cls, *exprs: "Expr") -> None:  # type: ignore
@@ -454,7 +461,7 @@ error: {smsfe}
             )
             return False
 
-        cls._walk_asts(dbg, *exprs, force_root_apply=True)
+        cls._walk_asts(dbg, *exprs)
 
     def reframe(self, *exprs: "Expr") -> None:  # type: ignore
         """
@@ -464,6 +471,13 @@ error: {smsfe}
 
     @classmethod
     def _reframe_asts(cls, stack_frames: "NatalStackFrame", *exprs: "Expr") -> None:  # type: ignore
+        """
+        Recursively traverse a PyTeal AST starting from the given Exprs
+        and re-frame each Expr to the given `stack_frames` object.
+        Exit the traversal when we encounter a user-defined Expr or when we encounter an Expr
+        that has already been re-framed. By exiting when a re-frame would have occured, we
+        avoid an infinite loop.
+        """
         from pyteal.ast import Expr
 
         if cls.sourcemapping_is_off():
@@ -475,13 +489,7 @@ error: {smsfe}
             e.stack_frames = stack_frames
             return False
 
-        cls._walk_asts(
-            set_frames,
-            *exprs,
-            force_root_apply=True,
-            exit_on_user_defined=True,
-            exit_when_stop_signal=True,
-        )
+        cls._walk_asts(set_frames, *exprs, skipping=True)
 
     @classmethod
     def reframe_ops_in_blocks(cls, root_expr: "Expr", start: "TealBlock") -> None:  # type: ignore
