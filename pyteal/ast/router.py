@@ -288,6 +288,12 @@ class CondNode:
     branch: Expr
 
     def reframe_asts(self, stack_frames: NatalStackFrame) -> None:
+        """
+        The purpose of reframe_asts is to source map the router generated ASTs to the
+        current method signature, as opposed to an obtuse mapping to the router itself.
+        It achieves this by traversing the AST's of `condition` and `branch` and re-setting
+        their stack frames to the provided `stack_frames` belonging to the method declaration.
+        """
         stack_frames.reframe(self.condition, self.branch)
 
 
@@ -534,6 +540,8 @@ class ASTBuilder:
             is_method_call: a boolean value that specify if the handler is an ABI method.
             handler: an `ABIReturnSubroutine`, or `SubroutineFnWrapper` (for `Subroutine` case), or an `Expr`.
             use_frame_pt: a boolean value that specify if router is compiled to frame pointer based code.
+            handler_stack_frames_container: an optional list that is used to return import NatalStackFrame's
+                for source mapping purposes.
         Returns:
             Expr:
                 - for bare-appcall it returns an expression that the handler takes no txn arg and Approve
@@ -542,6 +550,10 @@ class ASTBuilder:
         """
 
         def scavenge(frames_holder) -> None:
+            """
+            Scavenges the stack frames from a given `frames_holder` and appends them to the
+            source mapping output variable `handler_stack_frames_container`.
+            """
             if handler_stack_frames_container is not None:
                 handler_stack_frames_container.append(frames_holder.stack_frames)
 
@@ -1229,6 +1241,35 @@ class Router:
 
         Note that if no methods or bare app call actions have been registered to either the approval
         or clear state programs, then that program will reject all transactions.
+
+        Args:
+            version (optional): The TEAL version to compile to. Defaults to `DEFAULT_TEAL_VERSION`.
+            assemble_constants (optional): When `True`, the compiler will assemble constants to
+                intc and bytec blocks. Defaults to `False`.
+            optimize (optional): An `OptimizeOptions` object to use to provide optimization information
+                to the compiler.
+            approval_filename (optional): The filename to use in the sourcemap for the approval program.
+                If not provided, the router will use the Router object's `name` field with suffix "_approval.teal".
+            clear_filename (optional): The filename to use in the sourcemap for the clear program.
+                If not provided, the router will use the Router object's `name` field with suffix "_clear.teal".
+            with_sourcemaps (optional): When `True`, the compiler will produce source maps that map the
+                generated approval and clear TEAL assembly back to the original PyTeal source code.
+                Defaults to `False`.
+            pcs_in_sourcemap (optional): When `True`, the compiler will include the program counter in
+                relevant sourcemap artifacts. This requires an `AlgodClient` (see next param).
+                Defaults to `False`.
+            algod_client (optional): An `AlgodClient` to use to fetch program counters. Defaults to `None`.
+                When `pcs_in_sourcemap` is `True` and `algod_client` is not provided, the compiler will
+                assume that an Algorand Sandbox algod client is running on the default port (4001) and -if
+                this is not the case- will raise an exception.
+            annotate_teal (optional): When `True`, the compiler will produce a TEAL assembly with comments
+                that describe the PyTeal source code that generated each line of the assembly.
+                Defaults to `False`.
+            annotate_teal_headers (optional): When `True` along with `annotate_teal` being `True`, a header
+                line with column names will be added at the top of the annotated teal. Defaults to `False`.
+            annotate_teal_concise (optional): When `True` along with `annotate_teal` being `True`, the compiler
+                will provide fewer columns in the annotated teal. Defaults to `True`.
+
 
         Returns:
             A RouterResults containing the following:

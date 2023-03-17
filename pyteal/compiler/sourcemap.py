@@ -174,7 +174,7 @@ class R3SourceMap:
     This class is renames mjpieters' SourceMap
     (https://gist.github.com/mjpieters/86b0d152bb51d5f5979346d11005588b#file-sourcemap-py-L62)
     and tweaks it a bit, adding the following functionality:
-    * adds fields `file_liens`, `source_files`, `entries`
+    * adds fields `file_lines`, `source_files`, `entries`
     * __post_init__ (new) - runs a sanity check validation on the ordering of provided entries
     * __repr__ - printing out "R3SourceMap(...)" instead of "MJPSourceMap(...)"
     * from_json - accepting new params `sources_override`, `sources_content_override`, `target`, `add_right_bounds`

@@ -135,6 +135,20 @@ class StackFrame:
 
     @classmethod
     def _frame_info_is_pyteal_import(cls, f: FrameInfo) -> bool:
+        """
+        This method is used to determine if a FrameInfo is associated to a pyteal import.
+        It does so by splitting its joined code context on whitespace and periods.
+        For example, the following joined code context
+            from pyteal.ast.abi import Uint64 as Positive
+        becomes
+            ['from', 'pyteal', 'ast', 'abi', 'import', 'Uint64', 'as', 'Positive']
+        and we can verify that this is a pyteal import by checking that
+        'pyteal' and 'import' are both in the list.
+        This works for other imports such as
+            import pyteal.ast.abi as my_abi
+            import pyteal as pt
+            from pyteal import *
+        """
         cc = f.code_context
         if not cc:
             return False
