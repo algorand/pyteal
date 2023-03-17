@@ -167,10 +167,10 @@ def createConstantBlocks(ops: List[TealComponent]) -> List[TealComponent]:
         if byteFreqs[b] > 1
     ]
 
-    if len(intBlock) != 0:  # TODO: here's an expressionless TealOp #1
+    if len(intBlock) != 0:
         assembled.append(TealOp(None, Op.intcblock, *intBlock))
 
-    if len(byteBlock) != 0:  # TODO: here's an expressionless TealOp #2
+    if len(byteBlock) != 0:
         assembled.append(TealOp(None, Op.bytecblock, *byteBlock))
 
     for op in ops:

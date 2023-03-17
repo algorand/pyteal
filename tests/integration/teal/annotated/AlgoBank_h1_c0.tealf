@@ -1,6 +1,6 @@
 // GENERATED TEAL                      //    PC     PYTEAL PATH                                       LINE    PYTEAL
 #pragma version 6                      //    (0)    {CFILE}  {CL}      {COMPILE}
-txn NumAppArgs                         //    (20)   examples/application/abi/algobank.py              19      BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL))
+txn NumAppArgs                         //    (20)   examples/application/abi/algobank.py              19      {BCAs}
 int 0                                  //    (22)
 ==                                     //    (23)
 bnz main_l8                            //    (24)
@@ -115,7 +115,7 @@ txn OnCompletion                       //    (211)                              
 int DeleteApplication                  //    (213)
 ==                                     //    (215)
 bnz main_l14                           //    (216)
-err                                    //    (219)                                                    19      BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL))
+err                                    //    (219)                                                    19      {BCAs}
 main_l14:                              //                                                             32      OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL)
 txn ApplicationID                      //    (220)
 int 0                                  //    (222)

@@ -63,6 +63,7 @@ def test_sourcemap_annotate(
     CL = 50  # COMPILATION LINE right before this
     CFILE = "tests/integration/sourcemap_monkey_integ_test.py"  # this file
     COMPILE = "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), assemble_constants=False, with_sourcemaps=True, approval_filename=a_fname, clear_filename=c_fname, pcs_in_sourcemap=True, annotate_teal=True, annotate_teal_headers=annotate_teal_headers, annotate_teal_concise=annotate_teal_concise)"
+    BCAs = "BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL))"
     INNERTXN = "InnerTxnBuilder.SetFields({TxnField.type_enum: TxnType.Payment, TxnField.receiver: recipient.address(), TxnField.amount: amount.get(), TxnField.fee: Int(0)})"
 
     with_headers_int = int(annotate_teal_headers)
@@ -77,6 +78,7 @@ def test_sourcemap_annotate(
         CFILE=CFILE,
         CL=CL,
         COMPILE=COMPILE,
+        BCAs=BCAs,
         INNERTXN=INNERTXN,
     ).strip()
 
