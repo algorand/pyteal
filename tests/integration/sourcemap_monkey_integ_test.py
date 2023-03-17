@@ -60,7 +60,7 @@ def test_sourcemap_annotate(
         annotate_teal_concise=annotate_teal_concise,
     )
 
-    CL = 49  # COMPILATION LINE right before this
+    CL = 50  # COMPILATION LINE right before this
     CFILE = "tests/integration/sourcemap_monkey_integ_test.py"  # this file
     COMPILE = "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), assemble_constants=False, with_sourcemaps=True, approval_filename=a_fname, clear_filename=c_fname, pcs_in_sourcemap=True, annotate_teal=True, annotate_teal_headers=annotate_teal_headers, annotate_teal_concise=annotate_teal_concise)"
     INNERTXN = "InnerTxnBuilder.SetFields({TxnField.type_enum: TxnType.Payment, TxnField.receiver: recipient.address(), TxnField.amount: amount.get(), TxnField.fee: Int(0)})"
