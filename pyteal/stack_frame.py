@@ -454,11 +454,11 @@ error: {smsfe}
             return
 
         def dbg(e: Expr) -> bool:
-            print(
-                type(e),
-                ": ",
-                e.stack_frames._best_frame().as_pyteal_frame().hybrid_unparsed(),
-            )
+            try:
+                finfo = e.stack_frames._best_frame().as_pyteal_frame().hybrid_unparsed()
+            except SourceMapStackFramesError as smsfe:
+                finfo = str(smsfe)
+            print(type(e), ": ", finfo)
             return False
 
         cls._walk_asts(dbg, *exprs)
