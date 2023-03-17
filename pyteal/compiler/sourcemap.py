@@ -622,9 +622,6 @@ class _PyTealSourceMapper:
                     if its reason is one of PT_GENERATED.{TYPE_ENUM_ONCOMPLETE, TYPE_ENUM_TXN, BRANCH_LABEL, BRANCH}:
                         # these occur when one of the # T2PT* comments is encountered
                         replace this pyteal_frame by next_pyteal_frame
-                    if its reason is PT_GENERATED.FLAGGED_BY_DEV:
-                        # this occurs when NatalStackFrame._compiler_gen_DEPRECATED is set True
-                        replace this pyteal_frame by prev_pyteal_frame
 
             if ONLY prev_frame exists:
                 replace this pyteal_frame by prev_pyteal_frame
@@ -966,11 +963,6 @@ WARNING: Source mapping is unknown for the following:
                 ]:
                     return next_frame.clone(
                         PyTealFrameStatus.PATCHED_BY_NEXT_OVERRIDE_PREV
-                    )
-
-                if reason == PT_GENERATED.FLAGGED_BY_DEV:
-                    return prev_frame.clone(
-                        PyTealFrameStatus.PATCHED_BY_PREV_OVERRIDE_NEXT
                     )
 
                 # NO-OP otherwise:

@@ -159,12 +159,8 @@ class StackFrame:
         return f"{node=}; {context=}; frame_info={fi}"
 
     def compiler_generated(self) -> bool | None:
-        if self.creator._compiler_gen_DEPRECATED:
-            return True
-
         return self._frame_info_compiler_generated(self.frame_info)
 
-    # _frame_info_compiler_gen_DEPRECATEDerated ???
     @classmethod
     def _frame_info_compiler_generated(cls, f: FrameInfo) -> bool | None:
         if not (cc := f.code_context):
@@ -241,7 +237,6 @@ class NatalStackFrame:
     def __init__(
         self,
     ):
-        self._compiler_gen_DEPRECATED: bool = False  # TODO: is this _DEPRECATED right?
         self._pyteal_gen: bool = False
         self._has_import: bool = False
         self._frames: list[StackFrame] = []
@@ -373,7 +368,7 @@ error: {smsfe}
     # def __repr__(self) -> str:
     #     return f"{'C' if self._compiler_gen else 'U'}{self._frames}"
     def __repr__(self) -> str:
-        return f"{'C' if self._compiler_gen_DEPRECATED else 'U'}{self._frames}"
+        return f"NatalStackFrame({self._frames=})"
 
     def nodes(self) -> list[AST | None]:
         return [f.node for f in self._frames]
@@ -485,19 +480,6 @@ error: {smsfe}
         cls._walk_asts(dbg, *exprs, force_root_apply=True)
 
     @classmethod
-    def mark_asts_as_compiler_gen_DEPRECATED(cls, *exprs: "Expr") -> None:  # type: ignore
-        from pyteal.ast import Expr
-
-        if cls.sourcemapping_is_off():
-            return
-
-        def mark(e: Expr) -> bool:
-            e.stack_frames._compiler_gen_DEPRECATED = True
-            return False
-
-        cls._walk_asts(mark, *exprs)
-
-    @classmethod
     def reframe_asts(cls, stack_frames: "NatalStackFrame", *exprs: "Expr") -> None:  # type: ignore
         from pyteal.ast import Expr
 
@@ -538,7 +520,6 @@ class PT_GENERATED:
     BRANCH_LABEL = "PyTeal generated branching label"
     TYPE_ENUM_TXN = "PyTeal generated transaction Type Enum"
     TYPE_ENUM_ONCOMPLETE = "PyTeal generated OnComplete Type Enum"
-    FLAGGED_BY_DEV = "Developer has flagged expression as compiler generated"
 
 
 _PT_GEN = {
@@ -698,9 +679,6 @@ class PyTealFrame(StackFrame):
         """
         if not self.compiler_generated():
             return None
-
-        if self.creator._compiler_gen_DEPRECATED:
-            return PT_GENERATED.FLAGGED_BY_DEV
 
         for k, v in _PT_GEN.items():
             if k in self.raw_code():

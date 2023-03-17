@@ -1030,9 +1030,7 @@ class SubroutineEval:
             else int(subroutine.return_type != TealType.none)
         )
 
-        proto = Proto(subroutine.argument_count(), num_stack_outputs, mem_layout=layout)
-        NatalStackFrame.mark_asts_as_compiler_gen_DEPRECATED(proto)
-        return proto
+        return Proto(subroutine.argument_count(), num_stack_outputs, mem_layout=layout)
 
     def evaluate(self, subroutine: SubroutineDefinition) -> SubroutineDeclaration:
         proto = self.__proto(subroutine)
