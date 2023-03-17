@@ -5,7 +5,7 @@ import pytest
 import sys
 from unittest import mock
 
-BRUTE_FORCE_TERRIBLE_SKIPPING = "Compiling Algobabank with sourcemap enabled is flaky due to issue 199, so skipping for now"
+STABLE_SLOT_GENERATION = False  # Compiling Algobabank with sourcemap enabled is flaky due to issue 199, so skipping for now
 
 ALGOBANK = Path.cwd() / "examples" / "application" / "abi"
 
@@ -138,7 +138,7 @@ def test_reconstruct(sourcemap_enabled):
             assert len(expected_lines) == len(actual_lines)
             assert expected_lines == actual_lines
 
-    if not BRUTE_FORCE_TERRIBLE_SKIPPING:
+    if STABLE_SLOT_GENERATION:
         compare_and_assert(
             "algobank_approval.teal", compile_bundle.approval_sourcemapper
         )
