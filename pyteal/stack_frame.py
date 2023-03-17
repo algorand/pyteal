@@ -134,10 +134,6 @@ class StackFrame:
         return bool(cls._internal_paths_re.search(f.filename))
 
     @classmethod
-    def _is_pyteal_import(self) -> bool:
-        return self._frame_info_is_pyteal_import(self.frame_info)
-
-    @classmethod
     def _frame_info_is_pyteal_import(cls, f: FrameInfo) -> bool:
         cc = f.code_context
         if not cc:
@@ -238,7 +234,6 @@ class NatalStackFrame:
         self,
     ):
         self._pyteal_gen: bool = False
-        self._has_import: bool = False
         self._frames: list[StackFrame] = []
 
         if self.sourcemapping_is_off():
@@ -309,32 +304,12 @@ class NatalStackFrame:
         if compiler_gateway_idx >= 0:
             self._pyteal_gen = True
 
-        if first_import_idx >= 0:
-            self._has_import = True
-
-        # x = [
-        #     entry_idx,
-        #     compiler_gateway_idx,
-        #     self._pyteal_gen,
-        #     first_import_idx,
-        #     self._has_import,
-        #     first_non_pyteal_idx,
-        # ]
-        # y = 42
-
     def user_defined(self) -> bool:
         # TODO: probly need to `and not self._has_import`
         return not self._pyteal_gen  # ???  or self._has_import)
 
-    def pyteal_static(self) -> bool:
-        return self._has_import
-
     def __len__(self) -> int:
         return len(self._frames)
-
-    # def is_pyteal_static(self) -> bool:
-    #     """WRONG! - gotta look at the frame before last!!!"""
-    #     return StackFrame._is_pyteal_import(self._best_frame().frame_info)
 
     def _best_frame(self) -> StackFrame:
         """
@@ -365,8 +340,6 @@ error: {smsfe}
             )
         return None
 
-    # def __repr__(self) -> str:
-    #     return f"{'C' if self._compiler_gen else 'U'}{self._frames}"
     def __repr__(self) -> str:
         return f"NatalStackFrame({self._frames=})"
 
