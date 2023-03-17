@@ -14,7 +14,6 @@ from pyteal.ast.for_ import For
 from pyteal.types import TealType, require_type
 from enum import Enum
 
-# TODO: does this need signaling for the source mapper?
 ON_CALL_APP = Bytes("base16", "068101")  # v6 program "int 1"
 
 
@@ -122,7 +121,6 @@ class OpUp:
         if self.mode == OpUpMode.Explicit:
             fields |= {TxnField.application_id: cast(Expr, self.target_app_id)}
         else:
-            # TODO: cloning the DeleteApplication this is a hack for sourcemampping
             fields |= {
                 TxnField.on_completion: OnComplete.DeleteApplication,
                 TxnField.approval_program: ON_CALL_APP,
