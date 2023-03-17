@@ -540,8 +540,8 @@ class ASTBuilder:
             is_method_call: a boolean value that specify if the handler is an ABI method.
             handler: an `ABIReturnSubroutine`, or `SubroutineFnWrapper` (for `Subroutine` case), or an `Expr`.
             use_frame_pt: a boolean value that specify if router is compiled to frame pointer based code.
-            handler_stack_frames_container: an optional list that is used to return import NatalStackFrame's
-                for source mapping purposes.
+            handler_stack_frames_container: an optional list that is filled with NatalStackFrame's
+                used in source mapping.
         Returns:
             Expr:
                 - for bare-appcall it returns an expression that the handler takes no txn arg and Approve
