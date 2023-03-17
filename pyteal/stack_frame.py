@@ -445,8 +445,14 @@ error: {smsfe}
 
         cls._walk_asts(dbg, *exprs, force_root_apply=True)
 
+    def reframe(self, *exprs: "Expr") -> None:  # type: ignore
+        """
+        Re-frame the given ASTs to this NatalStackFrame.
+        """
+        self._reframe_asts(self, *exprs)
+
     @classmethod
-    def reframe_asts(cls, stack_frames: "NatalStackFrame", *exprs: "Expr") -> None:  # type: ignore
+    def _reframe_asts(cls, stack_frames: "NatalStackFrame", *exprs: "Expr") -> None:  # type: ignore
         from pyteal.ast import Expr
 
         if cls.sourcemapping_is_off():

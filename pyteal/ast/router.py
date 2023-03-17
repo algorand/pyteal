@@ -288,8 +288,7 @@ class CondNode:
     branch: Expr
 
     def reframe_asts(self, stack_frames: NatalStackFrame) -> None:
-        NatalStackFrame.reframe_asts(stack_frames, self.condition)
-        NatalStackFrame.reframe_asts(stack_frames, self.branch)
+        stack_frames.reframe(self.condition, self.branch)
 
 
 CondNode.__module__ = "pyteal"
@@ -1158,7 +1157,7 @@ class Router:
                         act := cast(Expr, bare_call_approval),
                     )
                 ]
-                NatalStackFrame.reframe_asts(bare_call_approval.stack_frames, cond)
+                bare_call_approval.stack_frames.reframe(cond)
                 act.stack_frames = bare_call_approval.stack_frames
 
         optimize = optimize or OptimizeOptions()

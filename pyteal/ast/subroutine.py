@@ -1110,7 +1110,7 @@ class SubroutineEval:
             ]
 
         # don't reframe the subroutine body
-        NatalStackFrame.reframe_asts(subroutine.stack_frames, *body_ops)
+        subroutine.stack_frames.reframe(*body_ops)
         body_ops.append(subroutine_body)
         sd = SubroutineDeclaration(subroutine, Seq(body_ops), deferred_expr)
         sd.trace = subroutine_body.trace
