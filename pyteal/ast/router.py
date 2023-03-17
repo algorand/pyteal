@@ -353,13 +353,6 @@ class CondWithMethod:
 CondWithMethod.__module__ = "pyteal"
 
 
-def _smap_friendly_approve():
-    # TODO: Consider replacing _smap_friendly_approve() with a reframe_asts()
-    a = Approve()
-    a.stack_frames._compiler_gen = True
-    return a
-
-
 @dataclass
 class ASTBuilder:
     def __init__(self):
@@ -1185,9 +1178,6 @@ class Router:
         optimize: Optional[OptimizeOptions] = None,
     ) -> tuple[str, str, sdk_abi.Contract]:
         """
-        TODO: Not so sure about the following _DEPRECATION_ anymore !!!!
-        DEPRECATED BUT KEPT FOR BACKWARDS COMPATIBILITY. PREFER Router.compile().
-
         Constructs and compiles approval and clear-state programs from the registered methods and
         bare app calls in the router, and also generates a Contract object to allow client read and call
         the methods easily.
@@ -1203,6 +1193,8 @@ class Router:
             * approval_program: compiled approval program string
             * clear_state_program: compiled clear-state program string
             * contract: a Python SDK Contract object to allow clients to make off-chain calls
+
+        NOTE: For generating a source map, please refer to the `Router.compile` method.
         """
         input = _RouterCompileInput(
             version=version,
