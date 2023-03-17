@@ -145,9 +145,9 @@ class StackFrame:
         and we can verify that this is a pyteal import by checking that
         'pyteal' and 'import' are both in the list.
         This works for other imports such as
-            import pyteal.ast.abi as my_abi
-            import pyteal as pt
-            from pyteal import *
+            'import pyteal.ast.abi as my_abi'
+            'import pyteal as pt'
+            'from pyteal import *'
         """
         cc = f.code_context
         if not cc:
