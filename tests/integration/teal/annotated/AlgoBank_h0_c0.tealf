@@ -1,4 +1,4 @@
-#pragma version 6                      //  (0)    {CFILE}  {CL}   router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), assemble_constants=False, with_sourcemaps=True, approval_filename=a_fname, clear_filename=c_fname, pcs_in_sourcemap=True, annotate_teal=True, annotate_teal_headers=annotate_teal_headers, annotate_teal_concise=annotate_teal_concise)
+#pragma version 6                      //  (0)    {CFILE}  {CL}   {COMPILE}
 txn NumAppArgs                         //  (20)   examples/application/abi/algobank.py              19   {BCAs}
 int 0                                  //  (22)
 ==                                     //  (23)
@@ -15,7 +15,7 @@ txna ApplicationArgs 0                 //  (53)                                 
 method "withdraw(uint64,account)void"  //  (56)
 ==                                     //  (62)
 bnz main_l5                            //  (63)
-err                                    //  (66)   {CFILE}  {CL}   router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), assemble_constants=False, with_sourcemaps=True, approval_filename=a_fname, clear_filename=c_fname, pcs_in_sourcemap=True, annotate_teal=True, annotate_teal_headers=annotate_teal_headers, annotate_teal_concise=annotate_teal_concise)
+err                                    //  (66)   {CFILE}  {CL}   {COMPILE}
 main_l5:                               //         examples/application/abi/algobank.py              78   def withdraw(amount: abi.Uint64, recipient: abi.Account) -> Expr:
 txn OnCompletion                       //  (67)
 int NoOp                               //  (69)
@@ -83,7 +83,7 @@ txn GroupIndex                         //  (159)
 int 1                                  //  (161)
 -                                      //  (162)
 store 0                                //  (163)
-load 0                                 //  (165)  {CFILE}  {CL}   router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), assemble_constants=False, with_sourcemaps=True, approval_filename=a_fname, clear_filename=c_fname, pcs_in_sourcemap=True, annotate_teal=True, annotate_teal_headers=annotate_teal_headers, annotate_teal_concise=annotate_teal_concise)
+load 0                                 //  (165)  {CFILE}  {CL}   {COMPILE}
 gtxns TypeEnum                         //  (167)  examples/application/abi/algobank.py              41   def deposit(payment: abi.PaymentTransaction, sender: abi.Account) -> Expr:
 int pay                                //  (169)
 ==                                     //  (170)
