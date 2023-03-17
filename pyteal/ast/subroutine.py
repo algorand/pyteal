@@ -1030,9 +1030,7 @@ class SubroutineEval:
             else int(subroutine.return_type != TealType.none)
         )
 
-        proto = Proto(subroutine.argument_count(), num_stack_outputs, mem_layout=layout)
-        NatalStackFrame.mark_asts_as_compiler_gen(proto)
-        return proto
+        return Proto(subroutine.argument_count(), num_stack_outputs, mem_layout=layout)
 
     def evaluate(self, subroutine: SubroutineDefinition) -> SubroutineDeclaration:
         proto = self.__proto(subroutine)
@@ -1111,6 +1109,8 @@ class SubroutineEval:
                 for var, index in arg_var_n_frame_index_pairs[::-1]
             ]
 
+        # don't reframe the subroutine body
+        subroutine.stack_frames.reframe(*body_ops)
         body_ops.append(subroutine_body)
         sd = SubroutineDeclaration(subroutine, Seq(body_ops), deferred_expr)
         sd.trace = subroutine_body.trace

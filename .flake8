@@ -29,8 +29,7 @@ per-file-ignores =
     pyteal/ir/tealconditionalblock.py:              F821
     pyteal/ir/tealsimpleblock.py:                   F821
     pyteal/stack_frame.py:                          F821
-    tests/teal/rps_helpers/program.py:              F401, F403, F405
-    tests/teal/rps.py:                              F403, F405, I252
+    tests/teal/rps.py:                              F401, F403, F405, I252
     tests/unit/module_test.py:                      F401, F403
 
 # from flake8-tidy-imports

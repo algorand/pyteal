@@ -346,7 +346,7 @@ class Compilation:
             teal_filename (optional): The filename to use in the sourcemap. Defaults to `None`.
             pcs_in_sourcemap (optional): When `True`, the compiler will include the program counter in
                 relevant sourcemap artifacts. This requires an `AlgodClient` (see next param). Defaults to `False`.
-            algod_client (optional): An `AlgodClient` to use to fetch the program counter. Defaults to `None`.
+            algod_client (optional): An `AlgodClient` to use to fetch program counters. Defaults to `None`.
                 When `pcs_in_sourcemap` is `True` and `algod_client` is not provided, the compiler will
                 assume that an Algorand Sandbox algod client is running on the default port (4001) and -if
                 this is not the case- will raise an exception.

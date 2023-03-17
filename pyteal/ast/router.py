@@ -24,6 +24,7 @@ from pyteal.ast.subroutine import (
     OutputKwArgInfo,
     Subroutine,
     SubroutineCall,
+    SubroutineDefinition,
     SubroutineFnWrapper,
 )
 from pyteal.ast.txn import Txn
@@ -237,8 +238,7 @@ class BareCallActions:
             if oca.is_empty():
                 continue
             wrapped_handler = ASTBuilder.wrap_handler(
-                False,
-                cast(ActionType, oca.action),
+                False, cast(ActionType, oca.action)
             )
             match oca.call_config:
                 case CallConfig.ALL:
@@ -256,13 +256,12 @@ class BareCallActions:
                     raise TealInternalError(
                         f"Unexpected CallConfig: {oca.call_config!r}"
                     )
-            conditions_n_branches.append(
-                CondNode(
-                    Txn.on_completion() == oc,
-                    cond_body,
-                )
-            )
-        return Cond(*[[n.condition, n.branch] for n in conditions_n_branches])
+            cn = CondNode(Txn.on_completion() == oc, cond_body)
+            cn.reframe_asts(oca.stack_frames)
+            conditions_n_branches.append(cn)
+        cond = Cond(*[[n.condition, n.branch] for n in conditions_n_branches])
+        cond.stack_frames = self.stack_frames
+        return cond
 
     def get_method_config(self) -> MethodConfig:
         return MethodConfig(
@@ -287,6 +286,15 @@ class CondNode:
 
     condition: Expr
     branch: Expr
+
+    def reframe_asts(self, stack_frames: NatalStackFrame) -> None:
+        """
+        The purpose of reframe_asts is to source map the router generated ASTs to the
+        current method signature, as opposed to an obtuse mapping to the router itself.
+        It achieves this by traversing the AST's of `condition` and `branch` and re-setting
+        their stack frames to the provided `stack_frames` belonging to the method declaration.
+        """
+        stack_frames.reframe(self.condition, self.branch)
 
 
 CondNode.__module__ = "pyteal"
@@ -328,21 +336,27 @@ class CondWithMethod:
         if not (isinstance(self.condition, Expr) or self.condition == 1):
             raise TealInputError("Invalid condition input for CondWithMethod")
 
-        res = ASTBuilder.wrap_handler(True, self.method, use_frame_pt=use_frame_pt)
+        user_frames_holder: list[NatalStackFrame] = []
+        res = ASTBuilder.wrap_handler(
+            True,
+            self.method,
+            use_frame_pt=use_frame_pt,
+            handler_stack_frames_container=user_frames_holder,
+        )
+        assert (
+            ufhlen := len(user_frames_holder)
+        ) == 1, f"Unexpected length for user_frames_holder: {ufhlen}"
+        user_frames: NatalStackFrame = user_frames_holder[0]
+
         if isinstance(self.condition, Expr):
             res = Seq(Assert(self.condition), res)
-            NatalStackFrame.reframe_asts(self.condition.stack_frames, res)
-        return CondNode(walk_in_cond, res)
+
+        cn = CondNode(walk_in_cond, res)
+        cn.reframe_asts(user_frames)
+        return cn
 
 
 CondWithMethod.__module__ = "pyteal"
-
-
-def _smap_friendly_approve():
-    # TODO: Consider replacing _smap_friendly_approve() with a reframe_asts()
-    a = Approve()
-    a.stack_frames._compiler_gen = True
-    return a
 
 
 @dataclass
@@ -513,6 +527,7 @@ class ASTBuilder:
         *,
         wrap_to_name: str | None = None,
         use_frame_pt: bool = False,
+        handler_stack_frames_container: list[NatalStackFrame] | None = None,
     ) -> Expr:
         """This is a helper function that handles transaction arguments passing in bare-app-call/abi-method handlers.
         If `is_method_call` is True, then it can only be `ABIReturnSubroutine`,
@@ -525,12 +540,25 @@ class ASTBuilder:
             is_method_call: a boolean value that specify if the handler is an ABI method.
             handler: an `ABIReturnSubroutine`, or `SubroutineFnWrapper` (for `Subroutine` case), or an `Expr`.
             use_frame_pt: a boolean value that specify if router is compiled to frame pointer based code.
+            handler_stack_frames_container: an optional list that is filled with NatalStackFrame's
+                used in source mapping.
         Returns:
             Expr:
                 - for bare-appcall it returns an expression that the handler takes no txn arg and Approve
                 - for abi-method it returns the txn args correctly decomposed into ABI variables,
                   passed in ABIReturnSubroutine and logged, then approve.
         """
+
+        def scavenge(frames_holder) -> None:
+            """
+            Scavenges the stack frames from a given `frames_holder` and appends them to the
+            source mapping output variable `handler_stack_frames_container`.
+            """
+            if handler_stack_frames_container is not None:
+                handler_stack_frames_container.append(frames_holder.stack_frames)
+
+        handler_evald: abi.ReturnedValue | SubroutineCall
+
         if not is_method_call:
             wrap_to_name = wrap_to_name or "bare appcall"
 
@@ -540,11 +568,8 @@ class ASTBuilder:
                         raise TealInputError(
                             f"{wrap_to_name} handler should be TealType.none not {handler.type_of()}."
                         )
-                    return (
-                        handler
-                        if handler.has_return()
-                        else Seq(handler, _smap_friendly_approve())
-                    )
+                    scavenge(handler)
+                    return handler if handler.has_return() else Seq(handler, Approve())
                 case SubroutineFnWrapper():
                     if handler.type_of() != TealType.none:
                         raise TealInputError(
@@ -555,7 +580,11 @@ class ASTBuilder:
                             f"subroutine call should take 0 arg for {wrap_to_name}. "
                             f"this subroutine takes {handler.subroutine.argument_count()}."
                         )
-                    return Seq(handler(), _smap_friendly_approve())
+                    handler_evald = handler()
+                    if isinstance(handler_evald, abi.ReturnedValue):
+                        handler_evald = handler_evald.computation
+                    scavenge(cast(SubroutineCall, handler_evald).subroutine)
+                    return Seq(handler_evald, Approve())
                 case ABIReturnSubroutine():
                     if handler.type_of() != "void":
                         raise TealInputError(
@@ -566,7 +595,12 @@ class ASTBuilder:
                             f"abi-returning subroutine call should take 0 arg for {wrap_to_name}. "
                             f"this abi-returning subroutine takes {handler.subroutine.argument_count()}."
                         )
-                    return Seq(cast(Expr, handler()), _smap_friendly_approve())
+                    handler_evald = handler()
+                    if isinstance(handler_evald, abi.ReturnedValue):
+                        handler_evald = handler_evald.computation
+
+                    scavenge(handler_evald)
+                    return Seq(cast(Expr, handler_evald), Approve())
                 case _:
                     raise TealInputError(
                         f"{wrap_to_name} can only accept: none type Expr, or Subroutine/ABIReturnSubroutine with none return and no arg"
@@ -583,13 +617,19 @@ class ASTBuilder:
                 f"{wrap_to_name} ABIReturnSubroutine is not routable "
                 f"got {handler.subroutine.argument_count()} args with {len(handler.subroutine.abi_args)} ABI args."
             )
-        if not use_frame_pt:
-            return ASTBuilder.__de_abify_subroutine_vanilla(handler)
-        else:
-            return ASTBuilder.__de_abify_subroutine_frame_pointers(handler)
+
+        ret_expr, subdef = (
+            ASTBuilder.__de_abify_subroutine_frame_pointers(handler)
+            if use_frame_pt
+            else ASTBuilder.__de_abify_subroutine_vanilla(handler)
+        )
+        scavenge(subdef)
+        return ret_expr
 
     @staticmethod
-    def __de_abify_subroutine_vanilla(handler: ActionType) -> Expr:
+    def __de_abify_subroutine_vanilla(
+        handler: ActionType,
+    ) -> tuple[Expr, SubroutineDefinition]:
         """This private function retains the previous (pre-frame-pointer) logic of handling ABIReturnSubroutine method's IO.
 
         This function can be roughly separated into following 4 parts:
@@ -638,28 +678,35 @@ class ASTBuilder:
             arg_vals, app_arg_vals, txn_arg_vals, handler
         )
 
+        ret_expr: Expr
+        handler_evald: abi.ReturnedValue | SubroutineCall
         if handler.type_of() == sdk_abi.Returns.VOID:
-            return Seq(
+            ret_expr = Seq(
                 *decode_instructions,
-                cast(SubroutineCall, handler(*arg_vals)),
-                _smap_friendly_approve(),
+                cast(SubroutineCall, handler_evald := handler(*arg_vals)),
+                Approve(),
             )
         else:
             output_temp: abi.BaseType = cast(
                 OutputKwArgInfo, handler.output_kwarg_info
             ).abi_type.new_instance()
-            returned_val: abi.ReturnedValue = cast(
-                abi.ReturnedValue, handler(*arg_vals)
-            )
-            return Seq(
+            handler_evald = cast(abi.ReturnedValue, handler(*arg_vals))
+            ret_expr = Seq(
                 *decode_instructions,
-                returned_val.store_into(output_temp),
+                handler_evald.store_into(output_temp),
                 abi.MethodReturn(output_temp),
-                _smap_friendly_approve(),
+                Approve(),
             )
 
+        if isinstance(handler_evald, abi.ReturnedValue):
+            handler_evald = handler_evald.computation
+
+        return ret_expr, cast(SubroutineCall, handler_evald).subroutine
+
     @staticmethod
-    def __de_abify_subroutine_frame_pointers(handler: ActionType) -> Expr:
+    def __de_abify_subroutine_frame_pointers(
+        handler: ActionType,
+    ) -> tuple[Expr, SubroutineDefinition]:
         """This private function implements the frame-pointer-based logic of handling ABIReturnSubroutine method's IO.
 
         This function can be roughly separated into following 4 parts:
@@ -737,15 +784,16 @@ class ASTBuilder:
         ]
         returning_steps: list[Expr]
 
+        handler_evald: abi.ReturnedValue | SubroutineCall
         if handler.type_of() == sdk_abi.Returns.VOID:
-            returning_steps = [cast(SubroutineCall, handler(*arg_vals))]
+            returning_steps = [cast(Expr, handler_evald := handler(*arg_vals))]
         else:
             output_temp: abi.BaseType = cast(
                 OutputKwArgInfo, handler.output_kwarg_info
             ).abi_type.new_instance()
             output_temp._stored_value = FrameVar(proto, 0)
             returned_val: abi.ReturnedValue = cast(
-                abi.ReturnedValue, handler(*arg_vals)
+                abi.ReturnedValue, handler_evald := handler(*arg_vals)
             )
             returning_steps = [
                 returned_val.store_into(output_temp),
@@ -755,7 +803,13 @@ class ASTBuilder:
         def declaration():
             return Seq(*decoding_steps, *returning_steps)
 
-        return Seq(subroutine_caster(declaration)(), _smap_friendly_approve())
+        if isinstance(handler_evald, abi.ReturnedValue):
+            handler_evald = handler_evald.computation
+
+        return (
+            Seq(subroutine_caster(declaration)(), Approve()),
+            cast(SubroutineCall, handler_evald).subroutine,
+        )
 
     def add_method_to_ast(
         self, method_signature: str, cond: Expr | int, handler: ABIReturnSubroutine
@@ -801,19 +855,21 @@ class _RouterBundle:
     input: Optional["_RouterCompileInput"] = None
 
     def get_results(self) -> RouterResults:
-        approval_sm: PyTealSourceMap | None = None
-        clear_sm: PyTealSourceMap | None = None
+        approval_sourcemap: PyTealSourceMap | None = None
+        clear_sourcemap: PyTealSourceMap | None = None
         if self.approval_sourcemapper:
-            approval_sm = self.approval_sourcemapper.get_sourcemap(self.approval_teal)
+            approval_sourcemap = self.approval_sourcemapper.get_sourcemap(
+                self.approval_teal
+            )
         if self.clear_sourcemapper:
-            clear_sm = self.clear_sourcemapper.get_sourcemap(self.clear_teal)
+            clear_sourcemap = self.clear_sourcemapper.get_sourcemap(self.clear_teal)
 
         return RouterResults(
-            self.approval_teal,
-            self.clear_teal,
-            self.abi_contract,
-            approval_sm,
-            clear_sm,
+            approval_teal=self.approval_teal,
+            clear_teal=self.clear_teal,
+            abi_contract=self.abi_contract,
+            approval_sourcemap=approval_sourcemap,
+            clear_sourcemap=clear_sourcemap,
         )
 
 
@@ -1106,7 +1162,7 @@ class Router:
                         act := cast(Expr, bare_call_approval),
                     )
                 ]
-                NatalStackFrame.reframe_asts(bare_call_approval.stack_frames, cond)
+                bare_call_approval.stack_frames.reframe(cond)
                 act.stack_frames = bare_call_approval.stack_frames
 
         optimize = optimize or OptimizeOptions()
@@ -1134,8 +1190,6 @@ class Router:
         optimize: Optional[OptimizeOptions] = None,
     ) -> tuple[str, str, sdk_abi.Contract]:
         """
-        DEPRECATED BUT KEPT FOR BACKWARDS COMPATIBILITY. PREFER Router.compile().
-
         Constructs and compiles approval and clear-state programs from the registered methods and
         bare app calls in the router, and also generates a Contract object to allow client read and call
         the methods easily.
@@ -1151,6 +1205,8 @@ class Router:
             * approval_program: compiled approval program string
             * clear_state_program: compiled clear-state program string
             * contract: a Python SDK Contract object to allow clients to make off-chain calls
+
+        NOTE: For generating a source map, please refer to the `Router.compile` method.
         """
         input = _RouterCompileInput(
             version=version,
@@ -1185,6 +1241,35 @@ class Router:
 
         Note that if no methods or bare app call actions have been registered to either the approval
         or clear state programs, then that program will reject all transactions.
+
+        Args:
+            version (optional): The TEAL version to compile to. Defaults to `DEFAULT_TEAL_VERSION`.
+            assemble_constants (optional): When `True`, the compiler will assemble constants to
+                intc and bytec blocks. Defaults to `False`.
+            optimize (optional): An `OptimizeOptions` object to use to provide optimization information
+                to the compiler.
+            approval_filename (optional): The filename to use in the sourcemap for the approval program.
+                If not provided, the router will use the Router object's `name` field with suffix "_approval.teal".
+            clear_filename (optional): The filename to use in the sourcemap for the clear program.
+                If not provided, the router will use the Router object's `name` field with suffix "_clear.teal".
+            with_sourcemaps (optional): When `True`, the compiler will produce source maps that map the
+                generated approval and clear TEAL assembly back to the original PyTeal source code.
+                Defaults to `False`.
+            pcs_in_sourcemap (optional): When `True`, the compiler will include the program counter in
+                relevant sourcemap artifacts. This requires an `AlgodClient` (see next param).
+                Defaults to `False`.
+            algod_client (optional): An `AlgodClient` to use to fetch program counters. Defaults to `None`.
+                When `pcs_in_sourcemap` is `True` and `algod_client` is not provided, the compiler will
+                assume that an Algorand Sandbox algod client is running on the default port (4001) and -if
+                this is not the case- will raise an exception.
+            annotate_teal (optional): When `True`, the compiler will produce a TEAL assembly with comments
+                that describe the PyTeal source code that generated each line of the assembly.
+                Defaults to `False`.
+            annotate_teal_headers (optional): When `True` along with `annotate_teal` being `True`, a header
+                line with column names will be added at the top of the annotated teal. Defaults to `False`.
+            annotate_teal_concise (optional): When `True` along with `annotate_teal` being `True`, the compiler
+                will provide fewer columns in the annotated teal. Defaults to `True`.
+
 
         Returns:
             A RouterResults containing the following:

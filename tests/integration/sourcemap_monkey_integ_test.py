@@ -12,8 +12,8 @@ via feature gate.
 """
 
 
-BRUTE_FORCE_TERRIBLE_SKIPPING = (
-    """The second router is flaky due to issue 199, so skipping for now"""
+STABLE_SLOT_GENERATION = (
+    False  # The second router is flaky due to issue 199, so skipping for now
 )
 FIXTURES = Path.cwd() / "tests" / "integration" / "teal" / "annotated"
 
@@ -22,7 +22,7 @@ ROUTERS = [
     ("pyteal.compiler.compiler_test", "FIRST_ROUTER"),
 ]
 
-if BRUTE_FORCE_TERRIBLE_SKIPPING:
+if not STABLE_SLOT_GENERATION:
     del ROUTERS[1]
 
 
@@ -34,6 +34,7 @@ def sourcemap_enabled():
     FeatureGates.set_sourcemap_enabled(previous)
 
 
+@pytest.mark.skipif(not STABLE_SLOT_GENERATION, reason="cf. #199")
 @pytest.mark.serial
 @pytest.mark.parametrize("path, obj", ROUTERS)
 @pytest.mark.parametrize("annotate_teal_headers", [True, False])
@@ -59,9 +60,10 @@ def test_sourcemap_annotate(
         annotate_teal_concise=annotate_teal_concise,
     )
 
-    CL = 49  # COMPILATION LINE right before this
+    CL = 50  # COMPILATION LINE right before this
     CFILE = "tests/integration/sourcemap_monkey_integ_test.py"  # this file
     COMPILE = "router.compile(version=6, optimize=OptimizeOptions(scratch_slots=True), assemble_constants=False, with_sourcemaps=True, approval_filename=a_fname, clear_filename=c_fname, pcs_in_sourcemap=True, annotate_teal=True, annotate_teal_headers=annotate_teal_headers, annotate_teal_concise=annotate_teal_concise)"
+    BCAs = "BareCallActions(no_op=OnCompleteAction(action=Approve(), call_config=CallConfig.CREATE), opt_in=OnCompleteAction(action=Approve(), call_config=CallConfig.ALL), close_out=OnCompleteAction(action=transfer_balance_to_lost, call_config=CallConfig.CALL), update_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL), delete_application=OnCompleteAction(action=assert_sender_is_creator, call_config=CallConfig.CALL))"
     INNERTXN = "InnerTxnBuilder.SetFields({TxnField.type_enum: TxnType.Payment, TxnField.receiver: recipient.address(), TxnField.amount: amount.get(), TxnField.fee: Int(0)})"
 
     with_headers_int = int(annotate_teal_headers)
@@ -76,6 +78,7 @@ def test_sourcemap_annotate(
         CFILE=CFILE,
         CL=CL,
         COMPILE=COMPILE,
+        BCAs=BCAs,
         INNERTXN=INNERTXN,
     ).strip()
 
@@ -136,6 +139,7 @@ def assert_lines_start_with(prefixes, lines):
         assert line.startswith(prefix)
 
 
+@pytest.mark.skipif(not STABLE_SLOT_GENERATION, reason="cf. #199")
 @pytest.mark.serial
 def test_no_regressions_via_fixtures_algobank(sourcemap_enabled):
     import pyteal as pt
@@ -144,7 +148,7 @@ def test_no_regressions_via_fixtures_algobank(sourcemap_enabled):
     algobank_router = getattr(import_module(module_path), obj)
     assert algobank_router.name == "AlgoBank"
 
-    actual_approval, actual_clear, _ = algobank_router.compile_program(
+    first_approval, first_clear, _ = algobank_router.compile_program(
         version=6, optimize=pt.OptimizeOptions(scratch_slots=True)
     )
 
@@ -156,8 +160,8 @@ def test_no_regressions_via_fixtures_algobank(sourcemap_enabled):
     with open(algobank_path / "algobank_clear_state.teal") as f:
         expected_clear = f.read()
 
-    assert expected_approval == actual_approval
-    assert expected_clear == actual_clear
+    assert expected_approval == first_approval
+    assert expected_clear == first_clear
 
     bundle = algobank_router.compile(
         version=6,
@@ -166,11 +170,17 @@ def test_no_regressions_via_fixtures_algobank(sourcemap_enabled):
     assert expected_approval == bundle.approval_teal
     assert expected_clear == bundle.clear_teal
 
+    assert first_approval == bundle.approval_teal
+    assert first_clear == bundle.clear_teal
+
     assert bundle.approval_sourcemap is None
     assert bundle.clear_sourcemap is None
 
-    approval_prefixes = expected_approval.splitlines()
-    clear_prefixes = expected_clear.splitlines()
+    expected_approval_prefixes = expected_approval.splitlines()
+    expected_clear_prefixes = expected_clear.splitlines()
+
+    first_approval_prefixes = first_approval.splitlines()
+    first_clear_prefixes = first_clear.splitlines()
 
     def assert_didnt_regress(pcs, headers, concise):
         bundle = algobank_router.compile(
@@ -185,15 +195,17 @@ def test_no_regressions_via_fixtures_algobank(sourcemap_enabled):
         assert expected_approval == bundle.approval_teal
         assert expected_clear == bundle.clear_teal
 
-        actual_approval_lines = bundle.approval_sourcemap.annotated_teal.splitlines()
-        actual_clear_lines = bundle.clear_sourcemap.annotated_teal.splitlines()
+        current_approval_lines = bundle.approval_sourcemap.annotated_teal.splitlines()
+        current_clear_lines = bundle.clear_sourcemap.annotated_teal.splitlines()
 
         if headers:
-            del actual_approval_lines[0]
-            del actual_clear_lines[0]
+            del current_approval_lines[0]
+            del current_clear_lines[0]
 
-        assert_lines_start_with(approval_prefixes, actual_approval_lines)
-        assert_lines_start_with(clear_prefixes, actual_clear_lines)
+        assert_lines_start_with(expected_approval_prefixes, current_approval_lines)
+        assert_lines_start_with(expected_clear_prefixes, current_clear_lines)
+        assert_lines_start_with(first_approval_prefixes, current_approval_lines)
+        assert_lines_start_with(first_clear_prefixes, current_clear_lines)
 
     for pcs, headers, concise in product([True, False], repeat=3):
         assert_didnt_regress(pcs, headers, concise)

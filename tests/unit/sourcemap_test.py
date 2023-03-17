@@ -6,9 +6,8 @@ blacklist, we need to move the test elsewhere to obtain reliable results.
 
 import ast
 import json
-import time
-
 from pathlib import Path
+import time
 from unittest import mock
 
 import pytest
@@ -54,7 +53,7 @@ def test_frames(sourcemap_enabled, StackFrame_keep_all_debugging):
     assert NatalStackFrame.sourcemapping_is_off() is False
 
     this_file, this_func = "sourcemap_test.py", "test_frames"
-    this_lineno, this_frame = 57, NatalStackFrame()._frames[1]
+    this_lineno, this_frame = 56, NatalStackFrame()._frames[1]
     code = (
         f"    this_lineno, this_frame = {this_lineno}, NatalStackFrame()._frames[1]\n"
     )
@@ -116,7 +115,7 @@ def test_TealMapItem_source_mapping(sourcemap_enabled):
         source_files=source_files,
         source_files_lines=[mock_source_lines],
     )
-    expected_json = '{"version": 3, "sources": ["tests/unit/sourcemap_test.py"], "names": [], "mappings": "AAwFW;AAAY;AAAZ", "file": "dohhh.teal", "sourceRoot": "~"}'
+    expected_json = '{"version": 3, "sources": ["tests/unit/sourcemap_test.py"], "names": [], "mappings": "AAuFW;AAAY;AAAZ", "file": "dohhh.teal", "sourceRoot": "~"}'
 
     assert expected_json == json.dumps(r3sm.to_json())
 
