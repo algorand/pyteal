@@ -171,10 +171,10 @@ class R3SourceMapJSON(TypedDict, total=False):
 @dataclass(frozen=True)
 class R3SourceMap:
     """
-    This class is renames 
+    This class is renames
     `mjpieters' SourceMap <https://gist.github.com/mjpieters/86b0d152bb51d5f5979346d11005588b#file-sourcemap-py-L62>`_.
     and tweaks it a bit, adding the following functionality:
-    
+
     - adds fields :code:`file_lines`, :code:`source_files`, :code:`entries`
     - :code:`__post_init__` (new) - runs a sanity check validation on the ordering of provided entries
     - :code:`__repr__` - printing out :code:`R3SourceMap(...)` instead of :code:`MJPSourceMap(...)`
@@ -183,7 +183,7 @@ class R3SourceMap:
     - :code:`to_json` - accepting new param :code:`with_contents`
 
     The main methods for this class are :code:`from_json` and :code:`to_json` which
-    follow the encoding conventions outlined in 
+    follow the encoding conventions outlined in
     `the Source Map Revison 3 Proposal <https://docs.google.com/document/d/1U1RGAehQwRypUTovF1KRlpiOFze0b-_2gc6fAH0KY0k/edit?hl=en_US&pli=1&pli=1>`_.
     """
 
@@ -232,7 +232,7 @@ class R3SourceMap:
             sources_override: A list of source files to use instead of the ones in the :code:`R3SourceMapJSON`.
                 STRICTLY SPEAKING :code:`sources` OUGHT NOT BE MISSING OR EMPTY in :code:`R3SourceMapJSON`.
                 However, currently the :code:`POST v2/teal/compile` endpoint populates this field with an empty list, as it is not provided the name of the
-                Teal file which is being compiled. In order comply with the R3 spec, this field is populated with :code:`["unknown"]` 
+                Teal file which is being compiled. In order comply with the R3 spec, this field is populated with :code:`["unknown"]`
                 when either missing or empty in the JSON and not supplied during construction.
             sources_content_override: :code:`sourcesContent` is optional and this provides a way at runtime to supply the actual source.
                 When provided, and the :code:`R3SourceMapJSON` is either missing or empty, this will be substituted.
