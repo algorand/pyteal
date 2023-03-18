@@ -7,10 +7,12 @@ from pyteal.compiler.compiler import (
     DEFAULT_PROGRAM_VERSION,
     CompileOptions,
     Compilation,
+    CompileResults,
     compileTeal,
 )
 from pyteal.compiler.optimizer import OptimizeOptions
-from pyteal.compiler.sourcemap import PyTealSourceMap
+from pyteal.compiler.sourcemap import PyTealSourceMap, R3SourceMap
+
 
 __all__ = [
     "MAX_TEAL_VERSION",
@@ -21,7 +23,9 @@ __all__ = [
     "DEFAULT_PROGRAM_VERSION",
     "CompileOptions",
     "Compilation",
+    "CompileResults",
     "compileTeal",
     "OptimizeOptions",
     "PyTealSourceMap",
+    "R3SourceMap",
 ]

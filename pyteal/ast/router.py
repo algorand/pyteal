@@ -841,6 +841,9 @@ class RouterResults:
     clear_sourcemap: Optional[PyTealSourceMap] = None
 
 
+RouterResults.__module__ = "pyteal"
+
+
 @dataclass
 class _RouterBundle:
     """Private class that includes a full sourcemapper object"""

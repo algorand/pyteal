@@ -9,8 +9,10 @@ from pyteal.compiler import (
     MIN_TEAL_VERSION,
     Compilation,
     CompileOptions,
+    CompileResults,
     OptimizeOptions,
     PyTealSourceMap,
+    R3SourceMap,
     compileTeal,
 )
 from pyteal.config import (
@@ -42,6 +44,7 @@ __all__ = (
         "AlgodClientError",
         "Compilation",
         "CompileOptions",
+        "CompileResults",
         "compileTeal",
         "DEFAULT_PROGRAM_VERSION",
         "DEFAULT_TEAL_VERSION",
@@ -55,6 +58,7 @@ __all__ = (
         "OptimizeOptions",
         "pragma",
         "PyTealSourceMap",
+        "R3SourceMap",
         "RETURN_HASH_PREFIX",
         "SourceMapDisabledError",
         "TealCompileError",

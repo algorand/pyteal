@@ -253,6 +253,9 @@ class CompileResults:
     sourcemap: PyTealSourceMap | None = None
 
 
+CompileResults.__module__ = "pyteal"
+
+
 @dataclass
 class _FullCompilationBundle:
     """
@@ -522,6 +525,9 @@ class Compilation:
             )
 
         return full_cpb
+
+
+Compilation.__module__ = "pyteal"
 
 
 def compileTeal(
