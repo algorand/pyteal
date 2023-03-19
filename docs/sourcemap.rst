@@ -115,7 +115,7 @@ Finally, we customize the annotated teal to have a header row with column names,
 and get as many columns as available by specifying :code:`annotate_teal_headers=True`
 and :code:`annotate_teal_concise=False`.
 
-4. Modify the receiver
+3. Modify the receiver
 ----------------------
 
 The newer :code:`compile(...)` methods return objects that contain source map information:
@@ -132,7 +132,7 @@ Let's simply print out the resulting annotated approval program:
     # Print the results
     print(results.approval_sourcemap.annotated_teal)
 
-5. Run the script
+4. Run the script
 -----------------
 
 .. code-block:: none
