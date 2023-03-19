@@ -10,7 +10,7 @@ Executive Summary
 0. Author your `PyTeal` script as usual and make other preparations.
 1. Enable the source mapper by turning on its feature gate.
 2. Modify the python compilation expression to be source map compatible.
-3. Grab the annotated teal out of the compilation's receiver.
+3. Grab the annotated teal out of the compile's result.
 4. Run the script as before.
 
 0. Preparation
@@ -29,8 +29,8 @@ In particular, :code:`pip install pyteal` will install the :code:`feature_gates`
 
 If you intend to add the bytecode's program counters to the source map, you'll need to ensure that an :code:`AlgodClient` is available.
 If it's running on port 4001 (the default Sandbox port for Algod) then everything should just work automatically. 
-However, if Algod is running on a different port, you'll need to create a separate :code:`AlgodClient` in your script which you will then provide 
-as a parameter of the compilation method.
+However, if Algod is running on a different port, you'll need to create a separate :code:`AlgodClient` in your script which you will then supply 
+as an argument to the compile instruction.
 
 NOTE: In this example *we're going to assume* that an :code:`AlgodClient` is running on port 4001.
 
@@ -52,16 +52,16 @@ This is as simple as adding the two lines to the top of `algobank.py`:
     # rest of the file
     ...
 
-The code importing `FeatureGates` and enabling the feature **must come before** any pyteal imports.
+The code importing :code:`FeatureGates` and enabling the feature **must come before** any pyteal imports.
 That's because as a side effect, pyteal imports actually create expressions that can end up in the PyTeal program, and we want these to be properly source mapped.
 
 In this example, we also added **flake8** lint ignore comments :code:`# noqa: E402` because in python 
 it's preferred to conclude all imports before running any code.
 
-2. Modify the compilation expression
-------------------------------------
+2. Modify the compile instruction
+---------------------------------
 
-In the :code:`algobank.py` example, the compilation expression looks like :code:`router.compile_program(...)`. 
+In the :code:`algobank.py` example, the compile instruction looks like :code:`router.compile_program(...)`. 
 This traditional expression, along with its analog for non-ABI programs, :code:`compileTeal(...)`,
 *don't support* source mapping. However, the newer :code:`compile(...)` methods do suport it:
 
