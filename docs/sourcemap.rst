@@ -7,7 +7,7 @@ Below, we illustrate how to enable source mapping and print out an *annotated* t
 Executive Summary
 -----------------
 
-0. Author your `PyTeal` script as usual and make other preparations.
+0. Author your PyTeal script as usual and make other preparations.
 1. Enable the source mapper by turning on its feature gate.
 2. Use a source-mappable compile instruction.
 3. Grab the annotated teal out of the compile's result.
@@ -16,7 +16,7 @@ Executive Summary
 0. Preparation
 --------------
 
-Go ahead and author your `PyTeal` dapp as you normally would. No modifications to `PyTeal` expressions are necessary to make your program source-mappable.
+Go ahead and author your PyTeal dapp as you normally would. No modifications to PyTeal expressions are necessary to make your program source-mappable.
 
 For example, consider the `AlgoBank example <https://github.com/algorand/pyteal/blob/67089381fcd9bf096c0b9118244709d145e90646/examples/application/abi/algobank.py>`_.
 It was authored long before the source mapper became available, but below we'll see how to modify it to become source-mappable.
