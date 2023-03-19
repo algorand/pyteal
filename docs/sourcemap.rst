@@ -178,4 +178,4 @@ annotated teal is attributed to the line that called the compiler:
 
   examples/application/abi/algobank.py  137     router.compile(version=6, ...)
   
-This is the line that would get mapped to in the case of such source map "misses"
+This is the line that would get mapped to in the case of such source map "misses".
