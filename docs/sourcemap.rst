@@ -9,7 +9,7 @@ Executive Summary
 
 0. Author your `PyTeal` script as usual and make other preparations.
 1. Enable the source mapper by turning on its feature gate.
-2. Modify the python compilation expression to be source map compatible.
+2. Use a source-mappable compile instruction.
 3. Grab the annotated teal out of the compile's result.
 4. Run the script as before.
 
@@ -115,8 +115,8 @@ Finally, we customize the annotated teal to have a header row with column names,
 and get as many columns as available by specifying :code:`annotate_teal_headers=True`
 and :code:`annotate_teal_concise=False`.
 
-3. Modify the receiver
-----------------------
+3. Grab annotated teal from result
+----------------------------------
 
 The newer :code:`compile(...)` methods return objects that contain source map information:
 
@@ -154,7 +154,7 @@ Each line's comments also provide:
 
 - (``PC``) - the program counter of the assembled bytecode for the TEAL instruction
 - (``PYTEAL PATH``) - the PyTeal file which generated the TEAL instruction
-- (``LINE``) - the line of the PyTeal source
+- (``LINE``) - the line *number* of the PyTeal source
 - (``PYTEAL``) - the PyTeal code that generated the TEAL instruction
 
 When a value -such as a line number- is omitted, it means that it is the same as the previous.
@@ -177,3 +177,5 @@ annotated teal is attributed to the line that called the compiler:
 .. code-block:: none
 
   examples/application/abi/algobank.py  137     router.compile(version=6, ...)
+  
+This is the line that would get mapped to in the case of such source map "misses"
