@@ -7,12 +7,11 @@ Below, we illustrate how to enable source mapping and print out an *annotated* t
 Executive Summary
 -----------------
 
-0. Prepare your `PyTeal` script as usual.
+0. Author your `PyTeal` script as usual and make other preparations.
 1. Enable the source mapper by turning on its feature gate.
-2. (Optional) If you would like to include program counters, you'll need to have an `AlgodClient` running and available in your environment.
-3. Modify the python compilation expression to be source map compatible.
-4. Grab the annotated teal out of the compilation's receiver.
-5. Run the script as before.
+2. Modify the python compilation expression to be source map compatible.
+3. Grab the annotated teal out of the compilation's receiver.
+4. Run the script as before.
 
 0. Preparation
 --------------
@@ -24,6 +23,17 @@ It was authored long before the source mapper became available, but below we'll 
 
 You may need to upgrade your pyteal dependency to a version that includes source mapping as well as feature gating.
 In particular, :code:`pip install pyteal` will install the :code:`feature_gates` package alongside :code:`pyteal`.
+
+(Optional)  **AlgodClient**
+------------------------------
+
+If you intend to add the bytecode's program counters to the source map, you'll need to ensure that an :code:`AlgodClient` is available.
+If it's running on port 4001 (the default Sandbox port for Algod) then everything should just work automatically. 
+However, if Algod is running on a different port, you'll need to create a separate :code:`AlgodClient` in your script which you will then provide 
+as a parameter of the compilation method.
+
+NOTE: In this example *we're going to assume* that an :code:`AlgodClient` is running on port 4001.
+
 
 1. Enable the source map feature gate
 -------------------------------------
@@ -48,17 +58,7 @@ That's because as a side effect, pyteal imports actually create expressions that
 In this example, we also added **flake8** lint ignore comments :code:`# noqa: E402` because in python 
 it's preferred to conclude all imports before running any code.
 
-2. (Optional)  **AlgodClient**
-------------------------------
-
-If you intend to add the bytecode's program counters to the source map, you'll need to ensure that an :code:`AlgodClient` is available.
-If it's running on port 4001 (the default Sandbox port for Algod) then everything should just work automatically. 
-However, if Algod is running on a different port, you'll need to create a separate :code:`AlgodClient` in your script which you will then provide 
-as a parameter of the compilation method.
-
-NOTE: In this example *we're going to assume* that an :code:`AlgodClient` is running on port 4001.
-
-3. Modify the compilation expression
+2. Modify the compilation expression
 ------------------------------------
 
 In the :code:`algobank.py` example, the compilation expression looks like :code:`router.compile_program(...)`. 
@@ -67,7 +67,6 @@ This traditional expression, along with its analog for non-ABI programs, :code:`
 
 - Compiler: :any:`Compilation.compile`. Source map specific parameters:
 
-  * :code:`teal_filename`
   * :code:`with_sourcemap`
   * :code:`teal_filename`
   * :code:`pcs_in_sourcemap`
@@ -112,7 +111,7 @@ to look like:
 Here we are enabling the source map and requesting annotated teal by
 setting :code:`with_sourcemaps=True` and :code:`annotate_teal=True`.
 :code:`pcs_in_sourcemap=True` will add the program counters to the source map.
-Finally, we customized the annotated teal to have a header row with column names,
+Finally, we customize the annotated teal to have a header row with column names,
 and get as many columns as available by specifying :code:`annotate_teal_headers=True`
 and :code:`annotate_teal_concise=False`.
 
@@ -145,19 +144,36 @@ Let's simply print out the resulting annotated approval program:
     int 0                                  //    (22)
     ... continues ...
 
-Takeaways
----------
+About the Output
+----------------
 
 The resulting annotated teal assembles down to the same bytecode
 as the unadorned program in :code:`results.approval_program`.
-Each row also provides in the comments:
 
-- (``PC``) - the program counter of the assembled bytecode for the Teal instruction
-- (``PYTEAL PATH``) - the PyTeal file which generated the Teal instruction
+Each line's comments also provide:
+
+- (``PC``) - the program counter of the assembled bytecode for the TEAL instruction
+- (``PYTEAL PATH``) - the PyTeal file which generated the TEAL instruction
 - (``LINE``) - the line of the PyTeal source
-- (``PYTEAL``) - the PyTeal code that generated the Teal instruction
+- (``PYTEAL``) - the PyTeal code that generated the TEAL instruction
 
-When a value is omitted, it means that it is the same as the previous.
+When a value -such as a line number- is omitted, it means that it is the same as the previous.
 
+Typically, the PyTeal compiler adds expressions to a user's program to make various
+constructs work. Consequently, not every TEAL instruction will have a corresponding
+PyTeal expression that was explicity written by the program author. 
+In such cases, the source mapper will attempt to find a reasonable user-attributable substitute.
+For example, if a program includes a :any:`Subroutine` definition, the compiler will add
+boiler plate for adding arguments to the stack before the subroutine is called, and then
+more boiler plate to read the arguments from the stack at the beginning of the subroutine's
+execution. The source mapper will attribute these boiler plate expressions to the subroutine's
+python definition.
 
+Sometimes, the source mapper doesn't succeed to find a user attribution
+and resorts to a attributing to the entry point into pyteal - the line
+that called the compiler. In the example above, the first line of the
+annotated teal is attributed to the line that called the compiler:
 
+.. code-block:: none
+
+  examples/application/abi/algobank.py  137     router.compile(version=6, ...)
