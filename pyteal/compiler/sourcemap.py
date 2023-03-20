@@ -171,19 +171,20 @@ class R3SourceMapJSON(TypedDict, total=False):
 @dataclass(frozen=True)
 class R3SourceMap:
     """
-    This class is renames mjpieters' SourceMap
-    (https://gist.github.com/mjpieters/86b0d152bb51d5f5979346d11005588b#file-sourcemap-py-L62)
+    This class is renames
+    `mjpieters' SourceMap <https://gist.github.com/mjpieters/86b0d152bb51d5f5979346d11005588b#file-sourcemap-py-L62>`_.
     and tweaks it a bit, adding the following functionality:
-    * adds fields `file_lines`, `source_files`, `entries`
-    * __post_init__ (new) - runs a sanity check validation on the ordering of provided entries
-    * __repr__ - printing out "R3SourceMap(...)" instead of "MJPSourceMap(...)"
-    * from_json - accepting new params `sources_override`, `sources_content_override`, `target`, `add_right_bounds`
-    * add_right_bounds (new) - allow specifying the right column bounds
-    * to_json - accepting new param `with_contents`
 
-    The main methods for this class are `from_json` and `to_json` which
-    follow the encoding conventions outlined in the Source Map Revison 3 Proposal
-    (https://docs.google.com/document/d/1U1RGAehQwRypUTovF1KRlpiOFze0b-_2gc6fAH0KY0k/edit?hl=en_US&pli=1&pli=1)
+    - adds fields :code:`file_lines`, :code:`source_files`, :code:`entries`
+    - :code:`__post_init__` (new) - runs a sanity check validation on the ordering of provided entries
+    - :code:`__repr__` - printing out :code:`R3SourceMap(...)` instead of :code:`MJPSourceMap(...)`
+    - :code:`from_json` - accepting new params :code:`sources_override`, :code:`sources_content_override`, :code:`target`, :code:`add_right_bounds`
+    - :code:`add_right_bounds` (new) - allow specifying the right column bounds
+    - :code:`to_json` - accepting new param :code:`with_contents`
+
+    The main methods for this class are :code:`from_json` and :code:`to_json` which
+    follow the encoding conventions outlined in
+    `the Source Map Revison 3 Proposal <https://docs.google.com/document/d/1U1RGAehQwRypUTovF1KRlpiOFze0b-_2gc6fAH0KY0k/edit?hl=en_US&pli=1&pli=1>`_.
     """
 
     filename: str | None
@@ -224,15 +225,20 @@ class R3SourceMap:
         add_right_bounds: bool = True,
     ) -> "R3SourceMap":
         """
-        NOTE about `*_if_missing` arguments
-        * sources_override - STRICTLY SPEAKING `sources` OUGHT NOT BE MISSING OR EMPTY in R3SourceMapJSON.
-            However, currently the POST v2/teal/compile endpoint populate this field with an empty list, as it is not provided the name of the
-            Teal file which is being compiled. In order comply with the R3 spec, this field is populated with ["unknown"] when either missing or empty
-            in the JSON and not supplied during construction.
-            An error will be raised when attempting to replace a nonempty R3SourceMapJSON.sources.
-        * sources_content_override - `sourcesContent` is optional and this provides a way at runtime to supply the actual source.
-            When provided, and the R3SourceMapJSON is either missing or empty, this will be substituted.
-            An error will be raised when attempting to replace a nonempty R3SourceMapJSON.sourcesContent.
+        Construct an :any:`R3SourceMap` from an :code:`R3SourceMapJSON` (a :code:`TypedDict`) object.
+
+        Args:
+            smap: The :code:`R3SourceMapJSON` object to construct from.
+            sources_override: A list of source files to use instead of the ones in the :code:`R3SourceMapJSON`.
+                STRICTLY SPEAKING :code:`sources` OUGHT NOT BE MISSING OR EMPTY in :code:`R3SourceMapJSON`.
+                However, currently the :code:`POST v2/teal/compile` endpoint populates this field with an empty list, as it is not provided the name of the
+                Teal file which is being compiled. In order comply with the R3 spec, this field is populated with :code:`["unknown"]`
+                when either missing or empty in the JSON and not supplied during construction.
+            sources_content_override: :code:`sourcesContent` is optional and this provides a way at runtime to supply the actual source.
+                When provided, and the :code:`R3SourceMapJSON` is either missing or empty, this will be substituted.
+                An error will be raised when attempting to replace a nonempty :code:`R3SourceMapJSON.sourcesContent`.
+            target: The target source code. This is used to populate the :code:`target_extract` field of the :code:`R3SourceMapping`.
+            add_right_bounds: Whether to add the right column bounds to the :code:`R3SourceMapping`.
         """
         if smap.get("version") != 3:
             raise ValueError("Only version 3 sourcemaps are supported ")
@@ -417,6 +423,9 @@ class R3SourceMap:
             return self.entries[l, cols[cidx and cidx - 1]]
 
 
+R3SourceMap.__module__ = "pyteal"
+
+
 # #### PyTeal Specific Classes below #### #
 
 _TEAL_LINE_NUMBER = "TL"
@@ -554,13 +563,23 @@ class TealMapItem(PyTealFrame):
 class PyTealSourceMap:
     """
     Encapsulate Expr-less source mapping data.
-    NOTE: type `PCSourceMap` is an alias for algosdk.source_map.SourceMap
+
+    Fields:
+        - :code:`teal_filename` - The filename of the TEAL source file, or ``None`` if not provided.
+        - :code:`r3_sourcemap` - The :any:`R3SourceMap` object, or ``None`` if not provided.
+        - :code:`pc_sourcemap` - The :code:`PCSourceMap` object (aka :code:`for algosdk.source_map.SourceMap`), or ``None`` if not provided.
+        - :code:`annotated_teal` - The annotated TEAL code as a string, or ``None`` if not provided.
+
+    NOTE: type ``PCSourceMap`` is an alias for `algosdk.source_map.SourceMap <https://github.com/algorand/py-algorand-sdk/blob/1b8ad21e372bfbe30bb4b7c7d5c4ec3cb90ff6c5/algosdk/source_map.py#L6-L56>`_
     """
 
     teal_filename: str | None
     r3_sourcemap: R3SourceMap | None
     pc_sourcemap: PCSourceMap | None
     annotated_teal: str | None
+
+
+PyTealSourceMap.__module__ = "pyteal"
 
 
 class _PyTealSourceMapper:

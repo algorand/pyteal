@@ -841,6 +841,9 @@ class RouterResults:
     clear_sourcemap: Optional[PyTealSourceMap] = None
 
 
+RouterResults.__module__ = "pyteal"
+
+
 @dataclass
 class _RouterBundle:
     """Private class that includes a full sourcemapper object"""
@@ -1253,7 +1256,7 @@ class Router:
             clear_filename (optional): The filename to use in the sourcemap for the clear program.
                 If not provided, the router will use the Router object's `name` field with suffix "_clear.teal".
             with_sourcemaps (optional): When `True`, the compiler will produce source maps that map the
-                generated approval and clear TEAL assembly back to the original PyTeal source code.
+                generated approval and clear TEAL program back to the original PyTeal source code.
                 Defaults to `False`.
             pcs_in_sourcemap (optional): When `True`, the compiler will include the program counter in
                 relevant sourcemap artifacts. This requires an `AlgodClient` (see next param).
@@ -1262,8 +1265,8 @@ class Router:
                 When `pcs_in_sourcemap` is `True` and `algod_client` is not provided, the compiler will
                 assume that an Algorand Sandbox algod client is running on the default port (4001) and -if
                 this is not the case- will raise an exception.
-            annotate_teal (optional): When `True`, the compiler will produce a TEAL assembly with comments
-                that describe the PyTeal source code that generated each line of the assembly.
+            annotate_teal (optional): When `True`, the compiler will produce a TEAL program with comments
+                that describe the PyTeal source code that generated each line of the program.
                 Defaults to `False`.
             annotate_teal_headers (optional): When `True` along with `annotate_teal` being `True`, a header
                 line with column names will be added at the top of the annotated teal. Defaults to `False`.
