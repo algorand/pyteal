@@ -18,8 +18,8 @@ Executive Summary
 
 Go ahead and author your PyTeal dapp as you normally would. No modifications to PyTeal expressions are necessary to make your program source-mappable.
 
-For example, consider the `AlgoBank example <https://github.com/algorand/pyteal/blob/67089381fcd9bf096c0b9118244709d145e90646/examples/application/abi/algobank.py>`_.
-It was authored long before the source mapper became available, but below we'll see how to modify it to become source-mappable.
+Consider the `AlgoBank example <https://github.com/algorand/pyteal/blob/67089381fcd9bf096c0b9118244709d145e90646/examples/application/abi/algobank.py>`_.
+It was authored long before the source mapper became available, but below we'll see how to tweak it to be source-mappable.
 
 You may need to upgrade your pyteal dependency to a version that includes source mapping as well as feature gating.
 In particular, :code:`pip install pyteal` will install the :code:`feature_gates` package alongside :code:`pyteal`.

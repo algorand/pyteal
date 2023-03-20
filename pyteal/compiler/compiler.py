@@ -313,7 +313,7 @@ class Compilation:
 
         Args:
             ast: The PyTeal expression to assemble
-            mode: The program's mode for execution. Either `Mode.Signature` or `Mode.Application`
+            mode: The program's mode for execution. Either :any:`Mode.Signature` or :any:`Mode.Application`
             version (optional):  The program version used to assemble the program. This will determine which
                 expressions and fields are able to be used in the program and how expressions compile to
                 TEAL opcodes. Defaults to 2 if not included.
