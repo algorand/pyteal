@@ -570,7 +570,7 @@ class PyTealSourceMap:
         - :code:`pc_sourcemap` - The :code:`PCSourceMap` object (aka :code:`for algosdk.source_map.SourceMap`), or ``None`` if not provided.
         - :code:`annotated_teal` - The annotated TEAL code as a string, or ``None`` if not provided.
 
-    NOTE: type ``PCSourceMap`` is an alias for `algosdk.source_map.SourceMap <https://github.com/algorand/py-algorand-sdk/blob/1b8ad21e372bfbe30bb4b7c7d5c4ec3cb90ff6c5/algosdk/source_map.py#L6-L56>`_
+    NOTE: type ``PCSourceMap`` is an alias for `algosdk.source_map.SourceMap <https://github.com/algorand/py-algorand-sdk/blob/1b8ad21e372bfbe30bb4b7c7d5c4ec3cb90ff6c5/algosdk/source_map.py#L6-L49>`_
     """
 
     teal_filename: str | None
