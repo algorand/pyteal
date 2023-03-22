@@ -939,8 +939,8 @@ WARNING: Source mapping is unknown for the following:
         )
 
         teal: str = self.compiled_teal()
-        for template in pt.Tmpl.session_templates():
-            teal = teal.replace(template, pt.Tmpl.zero(template))
+        for placeholder in pt.Tmpl.session_templates():
+            teal = teal.replace(placeholder, pt.Tmpl.zero(placeholder))
 
         algod_compilation = algod.compile(teal, source_map=True)
         raw_sourcemap = algod_compilation.get("sourcemap")
