@@ -25,6 +25,7 @@ def execute(cmd: list[str]) -> tuple[str, str]:
     stdout, stderr = p.communicate()
     return stdout.decode("utf-8"), stderr.decode("utf-8")
 
+
 # ------- generate provider's account -----------------------------------------------
 key_fn = str(uuid.uuid4()) + ".key"
 execute(["algokey", "generate", "-f", key_fn])
@@ -43,9 +44,11 @@ print("provider addr: {}".format(provider_addr))
 
 program = recurring_swap(tmpl_provider=Addr(provider_addr))
 teal_source = compileTeal(program, mode=Mode.Signature, version=2)
-print(f"""---------- teal source ----------
+print(
+    f"""---------- teal source ----------
 {teal_source}
----------------------------------""")
+---------------------------------"""
+)
 
 
 # compile teal
