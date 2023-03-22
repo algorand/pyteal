@@ -2,7 +2,7 @@
 Source Mapping HowTo
 ====================
 
-Below, we illustrate how to enable source mapping and print out an *annotated* teal version of the program which includes the original PyTeal in the comments.
+Below, we illustrate how to enable source mapping and print out an *annotated* TEAL version of the program which includes the original PyTeal in the comments.
 
 Executive Summary
 -----------------
@@ -10,7 +10,7 @@ Executive Summary
 0. Author your PyTeal script as usual and make other preparations.
 1. Enable the source mapper by turning on its feature gate.
 2. Use a source-mappable compile instruction.
-3. Grab the annotated teal out of the compile's result.
+3. Grab the annotated TEAL out of the compile's result.
 4. Run the script as before.
 
 0. Preparation
@@ -108,14 +108,14 @@ to look like:
         annotate_teal_concise=False,
     )
 
-Here we are enabling the source map and requesting annotated teal by
+Here we are enabling the source map and requesting annotated TEAL by
 setting :code:`with_sourcemaps=True` and :code:`annotate_teal=True`.
 :code:`pcs_in_sourcemap=True` will add the program counters to the source map.
-Finally, we customize the annotated teal to have a header row with column names,
+Finally, we customize the annotated TEAL to have a header row with column names,
 and get as many columns as available by specifying :code:`annotate_teal_headers=True`
 and :code:`annotate_teal_concise=False`.
 
-3. Grab annotated teal from result
+3. Grab annotated TEAL from result
 ----------------------------------
 
 The newer :code:`compile(...)` methods return objects that contain source map information:
@@ -147,12 +147,12 @@ Let's simply print out the resulting annotated approval program:
 About the Output
 ----------------
 
-The resulting annotated teal assembles down to the same bytecode
+The resulting annotated TEAL assembles down to the same bytecode
 as the unadorned program in :code:`results.approval_program`.
 
 Each line's comments also provide:
 
-- (``PC``) - the program counter of the assembled bytecode for the TEAL instruction
+- (``PC``) - the *beginning* program counter of the assembled bytecode for the TEAL instruction
 - (``PYTEAL PATH``) - the PyTeal file which generated the TEAL instruction
 - (``LINE``) - the line *number* of the PyTeal source
 - (``PYTEAL``) - the PyTeal code that generated the TEAL instruction
@@ -164,15 +164,15 @@ constructs work. Consequently, not every TEAL instruction will have a correspond
 PyTeal expression that was explicity written by the program author. 
 In such cases, the source mapper will attempt to find a reasonable user-attributable substitute.
 For example, if a program includes a :any:`Subroutine` definition, the compiler will add
-boiler plate for adding arguments to the stack before the subroutine is called, and then
-more boiler plate to read the arguments from the stack at the beginning of the subroutine's
-execution. The source mapper will attribute these boiler plate expressions to the subroutine's
+boilerplate for adding arguments to the stack before the subroutine is called, and then
+more boilerplate to read the arguments from the stack at the beginning of the subroutine's
+execution. The source mapper will attribute these boilerplate expressions to the subroutine's
 python definition.
 
 Sometimes, the source mapper doesn't succeed to find a user attribution
 and resorts to a attributing to the entry point into pyteal - the line
 that called the compiler. In the example above, the first line of the
-annotated teal is attributed to the line that called the compiler:
+annotated TEAL is attributed to the line that called the compiler:
 
 .. code-block:: none
 
