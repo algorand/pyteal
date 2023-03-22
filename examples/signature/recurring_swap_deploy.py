@@ -14,7 +14,6 @@ from pyteal import *
 
 from recurring_swap import recurring_swap
 
-# user declared algod connection parameters. Node must have EnableDeveloperAPI set to true in its config
 algod_address = "http://localhost:4001"
 algod_token = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 
