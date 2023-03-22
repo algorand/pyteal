@@ -143,13 +143,16 @@ def dutch_auction(
 
 if __name__ == "__main__":
     # to recreate files, run this script from the root of the repo
-    EXAMPLES = Path.cwd() / "examples" / "signature"
     results = Compilation(dutch_auction(), mode=Mode.Signature, version=2).compile(
         with_sourcemap=True,
+        pcs_in_sourcemap=True,
         annotate_teal=True,
         annotate_teal_headers=True,
         annotate_teal_concise=False,
     )
+
+    EXAMPLES = Path.cwd() / "examples" / "signature"
+
     with open(EXAMPLES / "dutch_auction.teal", "w") as f:
         f.write(results.teal)
 
