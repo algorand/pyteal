@@ -4,6 +4,8 @@
 
 ## Fixed
 
+* Fixed sourcemap errors related to TMPL usage
+
 ## Changed
 
 # v0.24.0
