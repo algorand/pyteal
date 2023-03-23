@@ -2,8 +2,8 @@
 
 import base64
 from nacl import encoding, hash
-import params
 import re
+import subprocess
 import time
 import uuid
 
@@ -13,6 +13,16 @@ from algosdk.future import transaction
 from pyteal import *
 
 from recurring_swap import recurring_swap
+
+algod_address = "http://localhost:4001"
+algod_token = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+
+
+def execute(cmd: list[str]) -> tuple[str, str]:
+    print("running: {}".format(" ".join(cmd)))
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdout, stderr = p.communicate()
+    return stdout.decode("utf-8"), stderr.decode("utf-8")
 
 
 # ------- generate provider's account -----------------------------------------------
@@ -33,7 +43,12 @@ print("provider addr: {}".format(provider_addr))
 
 program = recurring_swap(tmpl_provider=Addr(provider_addr))
 teal_source = compileTeal(program, mode=Mode.Signature, version=2)
-# print(teal_source)
+print(
+    f"""---------- teal source ----------
+{teal_source}
+---------------------------------"""
+)
+
 
 # compile teal
 teal_base = str(uuid.uuid4())
@@ -57,7 +72,7 @@ print("Dispense at least 202000 microAlgo to {}".format(escrow_addr))
 input("Make sure you did that. Press Enter to continue...")
 
 # now, as a provider, you can withdraw Algo from the escrow if you sign the first valid
-acl = algod.AlgodClient(params.algod_token, params.algod_address)
+acl = algod.AlgodClient(algod_token, algod_address)
 
 sp = acl.suggested_params_as_object()
 first_valid = sp.first
@@ -84,7 +99,7 @@ stdout, stderr = execute(
         "clerk",
         "tealsign",
         "--data-b64",
-        base64.b64encode(data),
+        base64.b64encode(data).decode(),
         "--lsig-txn",
         "r_s_1.txn",
         "--keyfile",
@@ -102,7 +117,7 @@ print(stdout)
 lstx = transaction.retrieve_from_file("r_s_1.txn")
 txid = acl.send_transactions(lstx)
 
-print("1st withraw Succesfull! txid:{}".format(txid))
+print("1st withdraw Succesfull! txid:{}".format(txid))
 
 # at least sleep to the next round
 time.sleep(6)
@@ -133,7 +148,7 @@ stdout, stderr = execute(
         "clerk",
         "tealsign",
         "--data-b64",
-        base64.b64encode(data),
+        base64.b64encode(data).decode(),
         "--lsig-txn",
         "r_s_2.txn",
         "--keyfile",

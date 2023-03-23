@@ -937,7 +937,12 @@ WARNING: Source mapping is unknown for the following:
         algod = algod_with_assertion(
             self.algod, msg="Adding PC's to sourcemap requires live Algod"
         )
-        algod_compilation = algod.compile(self.compiled_teal(), source_map=True)
+
+        teal: str = self.compiled_teal()
+        for placeholder in pt.Tmpl.session_templates():
+            teal = teal.replace(placeholder, pt.Tmpl.zero(placeholder))
+
+        algod_compilation = algod.compile(teal, source_map=True)
         raw_sourcemap = algod_compilation.get("sourcemap")
         if not raw_sourcemap:
             raise TealInternalError(
