@@ -74,7 +74,7 @@ lint-and-test: check-generate-init lint test-unit
 # ---- Integration Tests (algod required) ---- #
 
 algod-start:
-	docker compose up -d algod --wait
+	docker compose --verbose up -d algod --wait
 
 algod-version:
 	docker compose exec algod goal --version
