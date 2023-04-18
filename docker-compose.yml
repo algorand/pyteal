@@ -2,8 +2,8 @@ version: '3'
 
 services:
   algod:
-    image: algorand/algod:latest
-    platform: linux/arm64
+    image: wwinder/algod:42a112a25-dev
+    platform: linux/amd64
     ports:
       - "4001:8080" # algod
       - "4160:4160" # gossip
