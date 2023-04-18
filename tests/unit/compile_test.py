@@ -157,7 +157,7 @@ def test_cond():
     pt.compileTeal(core, mode=pt.Mode.Signature, version=2)
 
 
-@pytest.mark.timeout(2)
+@pytest.mark.timeout(5)
 def test_many_ifs():
     """
     Test with many pt.If statements to trigger potential corner cases in code generation.

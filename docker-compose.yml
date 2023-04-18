@@ -2,7 +2,8 @@ version: '3'
 
 services:
   algod:
-    image: wwinder/algod:latest
+    image: wwinder/algod:dev
+    platform: linux/amd64
     ports:
       - "4001:8080" # algod
       - "4160:4160" # gossip
@@ -13,4 +14,4 @@ services:
     healthcheck:
       test: goal node status
       interval: 2s
-      retries: 10
+      retries: 30
