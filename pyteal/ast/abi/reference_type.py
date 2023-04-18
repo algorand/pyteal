@@ -124,7 +124,7 @@ class Account(ReferenceType):
                 must evaluate to uint64).
         """
         if isinstance(asset, Asset):
-            asset_ref = asset.referenced_index()
+            asset_ref = asset.asset_id()
         else:
             asset_ref = asset
         return AssetHoldingObject(asset_ref, self.referenced_index())
@@ -172,11 +172,11 @@ class Asset(ReferenceType):
             account_ref = account.referenced_index()
         else:
             account_ref = account
-        return AssetHoldingObject(self.referenced_index(), account_ref)
+        return AssetHoldingObject(self.asset_id(), account_ref)
 
     def params(self) -> AssetParamObject:
         """Get information about the asset's parameters."""
-        return AssetParamObject(self.referenced_index())
+        return AssetParamObject(self.asset_id())
 
 
 Asset.__module__ = "pyteal.abi"
@@ -209,7 +209,7 @@ class Application(ReferenceType):
 
     def params(self) -> AppParamObject:
         """Get information about the application's parameters."""
-        return AppParamObject(self.referenced_index())
+        return AppParamObject(self.application_id())
 
 
 Application.__module__ = "pyteal.abi"

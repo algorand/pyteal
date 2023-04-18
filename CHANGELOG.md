@@ -12,6 +12,10 @@
 
 * Fixed sourcemap errors related to TMPL usage. ([#696](https://github.com/algorand/pyteal/pull/696))
 
+## Changed
+
+* Stop using slot indexes for assets and apps when accessing properties of ABI reference type arguments. ([#701](https://github.com/algorand/pyteal/pull/701))
+
 # v0.24.0
 
 ## Added
