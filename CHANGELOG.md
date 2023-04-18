@@ -4,6 +4,12 @@
 
 ## Fixed
 
+## Changed
+
+# v0.24.1
+
+## Fixed
+
 * Fixed sourcemap errors related to TMPL usage. ([#696](https://github.com/algorand/pyteal/pull/696))
 
 ## Changed
