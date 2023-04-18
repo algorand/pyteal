@@ -2,7 +2,7 @@ version: '3'
 
 services:
   algod:
-    image: wwinder/algod:42a112a25-dev
+    image: wwinder/algod:dev
     platform: linux/amd64
     ports:
       - "4001:8080" # algod
