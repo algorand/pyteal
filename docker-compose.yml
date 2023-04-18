@@ -3,6 +3,7 @@ version: '3'
 services:
   algod:
     image: wwinder/algod:latest
+    platform: linux/amd64
     ports:
       - "4001:8080" # algod
       - "4160:4160" # gossip
