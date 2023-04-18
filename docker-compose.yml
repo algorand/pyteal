@@ -13,4 +13,4 @@ services:
     healthcheck:
       test: goal node status
       interval: 2s
-      retries: 10
+      retries: 30
