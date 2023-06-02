@@ -2,6 +2,8 @@
 
 ## Added
 
+* Support for compiling AVM v9 programs. ([#707](https://github.com/algorand/pyteal/pull/707))
+
 ## Fixed
 
 ## Changed

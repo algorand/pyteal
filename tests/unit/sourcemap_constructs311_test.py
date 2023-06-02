@@ -153,7 +153,7 @@ def big_opups_example(pt):
     )
 
 
-CONSTRUCTS_LATEST_VERSION = 8
+CONSTRUCTS_LATEST_VERSION = 9
 
 
 def test_constructs_handles_latest_pyteal():
@@ -2235,9 +2235,9 @@ def constructs_test(i, test_case, mode, version):
         fixed_mode = test_case[3]
         if mode != fixed_mode:
             return
-    optimize = None
+    optimize = pt.OptimizeOptions(scratch_slots=False)
     if len(test_case) > 4:
-        optimize = pt.OptimizeOptions(**test_case[4])
+        optimize = pt.OptimizeOptions(scratch_slots=False, **test_case[4])
 
     mode = getattr(pt.Mode, mode)
     if isinstance(expr, pt.Router):

@@ -35,7 +35,7 @@ from pyteal.types import TealType
 from pyteal.util import algod_with_assertion
 
 
-MAX_PROGRAM_VERSION = 8
+MAX_PROGRAM_VERSION = 9
 FRAME_POINTERS_VERSION = 8
 DEFAULT_SCRATCH_SLOT_OPTIMIZE_VERSION = 9
 MIN_PROGRAM_VERSION = 2
