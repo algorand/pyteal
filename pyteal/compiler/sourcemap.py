@@ -570,7 +570,7 @@ class PyTealSourceMap:
         - :code:`pc_sourcemap` - The :code:`PCSourceMap` object (aka :code:`for algosdk.source_map.SourceMap`), or ``None`` if not provided.
         - :code:`annotated_teal` - The annotated TEAL code as a string, or ``None`` if not provided.
 
-    NOTE: type ``PCSourceMap`` is an alias for `algosdk.source_map.SourceMap <https://github.com/algorand/py-algorand-sdk/blob/1b8ad21e372bfbe30bb4b7c7d5c4ec3cb90ff6c5/algosdk/source_map.py#L6-L56>`_
+    NOTE: type ``PCSourceMap`` is an alias for `algosdk.source_map.SourceMap <https://github.com/algorand/py-algorand-sdk/blob/1b8ad21e372bfbe30bb4b7c7d5c4ec3cb90ff6c5/algosdk/source_map.py#L6-L49>`_
     """
 
     teal_filename: str | None
@@ -937,7 +937,12 @@ WARNING: Source mapping is unknown for the following:
         algod = algod_with_assertion(
             self.algod, msg="Adding PC's to sourcemap requires live Algod"
         )
-        algod_compilation = algod.compile(self.compiled_teal(), source_map=True)
+
+        teal: str = self.compiled_teal()
+        for placeholder in pt.Tmpl.session_templates():
+            teal = teal.replace(placeholder, pt.Tmpl.zero(placeholder))
+
+        algod_compilation = algod.compile(teal, source_map=True)
         raw_sourcemap = algod_compilation.get("sourcemap")
         if not raw_sourcemap:
             raise TealInternalError(

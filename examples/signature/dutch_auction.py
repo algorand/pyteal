@@ -1,6 +1,12 @@
 # This example is provided for informational purposes only and has not been audited for security.
+from pathlib import Path
 
-from pyteal import *
+from feature_gates import FeatureGates
+
+FeatureGates.set_sourcemap_enabled(True)
+
+
+from pyteal import *  # noqa: E402
 
 
 """ Template for layer 1 dutch auction (from Fabrice and Shai)
@@ -136,4 +142,19 @@ def dutch_auction(
 
 
 if __name__ == "__main__":
-    print(compileTeal(dutch_auction(), mode=Mode.Signature, version=2))
+    # to recreate files, run this script from the root of the repo
+    results = Compilation(dutch_auction(), mode=Mode.Signature, version=2).compile(
+        with_sourcemap=True,
+        pcs_in_sourcemap=True,
+        annotate_teal=True,
+        annotate_teal_headers=True,
+        annotate_teal_concise=False,
+    )
+
+    EXAMPLES = Path.cwd() / "examples" / "signature"
+
+    with open(EXAMPLES / "dutch_auction.teal", "w") as f:
+        f.write(results.teal)
+
+    with open(EXAMPLES / "dutch_auction_annotated.teal", "w") as f:
+        f.write(results.sourcemap.annotated_teal)

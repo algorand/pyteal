@@ -2176,6 +2176,35 @@ CONSTRUCTS = [
         6,
         "Application",
     ),
+    (  # 44: Templates
+        lambda pt: pt.Itob(pt.Int(1) + pt.Int(1) + pt.Tmpl.Int("TMPL_VAR"))
+        == pt.Concat(pt.Bytes("test"), pt.Bytes("test"), pt.Bytes("test2")),
+        [
+            [P, C],
+            ("int 1", "pt.Int(1)"),
+            ("int 1", "pt.Int(1)"),
+            ("+", "pt.Int(1) + pt.Int(1)"),
+            ("int TMPL_VAR", "pt.Tmpl.Int('TMPL_VAR')"),
+            ("+", "pt.Int(1) + pt.Int(1) + pt.Tmpl.Int('TMPL_VAR')"),
+            ("itob", "pt.Itob(pt.Int(1) + pt.Int(1) + pt.Tmpl.Int('TMPL_VAR'))"),
+            ('byte "test"', "pt.Bytes('test')"),
+            ('byte "test"', "pt.Bytes('test')"),
+            (
+                "concat",
+                "pt.Concat(pt.Bytes('test'), pt.Bytes('test'), pt.Bytes('test2'))",
+            ),
+            ('byte "test2"', "pt.Bytes('test2')"),
+            (
+                "concat",
+                "pt.Concat(pt.Bytes('test'), pt.Bytes('test'), pt.Bytes('test2'))",
+            ),
+            (
+                "==",
+                "pt.Itob(pt.Int(1) + pt.Int(1) + pt.Tmpl.Int('TMPL_VAR')) == pt.Concat(pt.Bytes('test'), pt.Bytes('test'), pt.Bytes('test2'))",
+            ),
+            ("return", C),
+        ],
+    ),
 ]
 
 

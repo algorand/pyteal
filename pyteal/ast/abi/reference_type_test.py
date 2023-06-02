@@ -147,7 +147,7 @@ def test_Account_params():
 def test_Account_asset_holding():
     value = abi.Account()
 
-    assets = ((pt.Int(6), pt.Int(6)), (a := abi.Asset(), a.referenced_index()))
+    assets = ((pt.Int(6), pt.Int(6)), (a := abi.Asset(), a.asset_id()))
 
     for asset, expected_asset in assets:
         holding = value.asset_holding(asset)
@@ -234,7 +234,7 @@ def test_Asset_holding():
 
         assert type(holding) is pt.AssetHoldingObject
 
-        expected_asset = value.referenced_index()
+        expected_asset = value.asset_id()
         actual_asset = holding._asset
 
         actual_account = holding._account
@@ -253,7 +253,7 @@ def test_Asset_params():
 
     assert type(params) is pt.AssetParamObject
 
-    expected = value.referenced_index()
+    expected = value.asset_id()
     actual = params._asset
 
     with pt.TealComponent.Context.ignoreExprEquality():
@@ -318,7 +318,7 @@ def test_Application_params():
 
     assert type(params) is pt.AppParamObject
 
-    expected = value.referenced_index()
+    expected = value.application_id()
     actual = params._app
 
     with pt.TealComponent.Context.ignoreExprEquality():

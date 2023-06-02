@@ -2,12 +2,28 @@
 
 ## Added
 
+## Fixed
+
+## Changed
+
+# v0.24.1
+
+## Fixed
+
+* Fixed sourcemap errors related to TMPL usage. ([#696](https://github.com/algorand/pyteal/pull/696))
+
+## Changed
+
+* Stop using slot indexes for assets and apps when accessing properties of ABI reference type arguments. ([#701](https://github.com/algorand/pyteal/pull/701))
+
+# v0.24.0
+
+## Added
+
 * Clarify that `Approve` and `Reject` always exit in the documentation. ([#660](https://github.com/algorand/pyteal/pull/660))
 * Added frame pointer support for router. ([#600](https://github.com/algorand/pyteal/pull/600))
   * NOTE: a backwards incompatable change was imposed in this PR: previous `build_program` method in `Router` was exported and public, now this method is hidden. Use `compile_program` only.
 * Experimental source mapping capability. ([#650](https://github.com/algorand/pyteal/pull/650))
-
-## Fixed
 
 ## Changed
 
