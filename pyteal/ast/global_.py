@@ -120,7 +120,7 @@ class Global(LeafExpr):
 
     @classmethod
     def current_application_address(cls) -> "Global":
-        """Get the address of that the current application controls.
+        """Get the address that the current application controls.
 
         Fails during Signature mode. Requires program version 5 or higher."""
         return cls(GlobalField.current_app_address)
