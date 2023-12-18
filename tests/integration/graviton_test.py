@@ -513,7 +513,7 @@ def blackbox_test_runner(
         assert mode_has_property(exec_mode, dr_prop)
 
         invariant = Invariant(predicate, name=f"{case_name}[{i}]@{mode}-{dr_prop}")
-        print(f"{i+1}. Assertion for {case_name}-{mode}: {dr_prop} <<{predicate}>>")
+        print(f"{i + 1}. Assertion for {case_name}-{mode}: {dr_prop} <<{predicate}>>")
         invariant.validates(dr_prop, inspectors)
 
     return inspectors

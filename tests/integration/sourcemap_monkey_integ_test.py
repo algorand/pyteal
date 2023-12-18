@@ -118,10 +118,10 @@ def first_diff(expected, actual):
     elines = expected.splitlines()
     for i, e in enumerate(elines):
         if i >= len(alines):
-            return f"""LINE[{i+1}] missing from actual:
+            return f"""LINE[{i + 1}] missing from actual:
 {e}"""
         if e != (a := alines[i]):
-            return f"""LINE[{i+1}]
+            return f"""LINE[{i + 1}]
 {e}
 VS.
 {a}

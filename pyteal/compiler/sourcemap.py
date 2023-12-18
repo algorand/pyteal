@@ -203,7 +203,7 @@ class R3SourceMap:
 
             if entry >= entries[i + 1]:
                 raise TypeError(
-                    f"Invalid source map as entries aren't properly ordered: entries[{i}] = {entry} >= entries[{i+1}] = {entries[i + 1]}"
+                    f"Invalid source map as entries aren't properly ordered: entries[{i}] = {entry} >= entries[{i + 1}] = {entries[i + 1]}"
                 )
 
     def __repr__(self) -> str:
@@ -1329,12 +1329,12 @@ WARNING: Source mapping is unknown for the following:
         ):
             if not annotated_line.startswith(teal_line):
                 raise cls._unexpected_error(
-                    f"annotated teal ought to begin exactly with the teal line but line {i+1} [{annotated_line}] doesn't start with [{teal_line}]",
+                    f"annotated teal ought to begin exactly with the teal line but line {i + 1} [{annotated_line}] doesn't start with [{teal_line}]",
                 )
             pattern = r"^\s*($|//.*)"
             if not re.match(pattern, annotated_line[len(teal_line) :]):
                 raise cls._unexpected_error(
-                    f"annotated teal ought to begin exactly with the teal line followed by annotation in comments but line {i+1} [{annotated_line}] has non-commented out annotations"
+                    f"annotated teal ought to begin exactly with the teal line followed by annotation in comments but line {i + 1} [{annotated_line}] has non-commented out annotations"
                 )
 
     @classmethod
