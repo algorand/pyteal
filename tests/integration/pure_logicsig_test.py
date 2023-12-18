@@ -105,7 +105,9 @@ def factorizer_game_check(a: int, p: int, q: int, M: int, N: int):
     with open(csvpath, "w") as f:
         f.write(Inspector.csv_report(inputs, inspectors, txns=txns))
 
-    print(f"validating passing_invariant for (a,p,q) = {a, p, q} over {N} dry-run calls")
+    print(
+        f"validating passing_invariant for (a,p,q) = {a, p, q} over {N} dry-run calls"
+    )
     passing_invariant = Invariant(
         lambda args: bool(payment_amount(*args)),
         name=f"passing invariant for coeffs {a, p, q}",
