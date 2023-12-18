@@ -1,20 +1,16 @@
 import pytest
-import pkg_resources
+from importlib import metadata
 
 
 @pytest.fixture
 def mock_version(version: str, monkeypatch: pytest.MonkeyPatch):
-    def mocked_require(name: str):
+    def mocked_version(name: str):
         if (
             name == "pyteal"
             and version is not None  # don't mock if no version is specified
         ):
-            return [
-                pkg_resources.Distribution(
-                    version=version,
-                )
-            ]
+            return version
         else:
-            return pkg_resources.require(name)[0]
+            return metadata.version(name)
 
-    monkeypatch.setattr(pkg_resources, "require", mocked_require)
+    monkeypatch.setattr(metadata, "version", mocked_version)
