@@ -2,6 +2,8 @@
 
 ## Added
 
+* Support for Python 3.12. ([#713](https://github.com/algorand/pyteal/pull/713))
+
 ## Fixed
 
 ## Changed

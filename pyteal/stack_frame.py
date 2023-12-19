@@ -9,7 +9,7 @@ from typing import Callable, Final, cast
 import os
 import re
 
-from executing import Source  # type: ignore
+from executing import Source
 
 
 class SourceMapStackFramesError(RuntimeError):
