@@ -2,6 +2,7 @@
 
 ## Added
 
+* Support for AVM v10 programs. ([#714](https://github.com/algorand/pyteal/pull/714))
 * Support for Python 3.12. ([#713](https://github.com/algorand/pyteal/pull/713))
 
 ## Fixed
