@@ -153,7 +153,7 @@ def big_opups_example(pt):
     )
 
 
-CONSTRUCTS_LATEST_VERSION = 9
+CONSTRUCTS_LATEST_VERSION = 10
 
 
 def test_constructs_handles_latest_pyteal():
