@@ -89,7 +89,7 @@ def test_TealMapItem_source_mapping(sourcemap_enabled):
     expr_line_offset, expr_str = 50, "expr = pt.Int(0) + pt.Int(1)"
 
     def mock_teal(ops):
-        return [f"{i+1}. {op}" for i, op in enumerate(ops)]
+        return [f"{i + 1}. {op}" for i, op in enumerate(ops)]
 
     components = []
     b = expr.__teal__(pt.CompileOptions())[0]

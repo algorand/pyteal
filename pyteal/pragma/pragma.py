@@ -1,5 +1,5 @@
 import re
-import pkg_resources
+from importlib import metadata
 from typing import Any
 from semantic_version import Version, NpmSpec
 
@@ -116,7 +116,7 @@ def pragma(
             # version constraint
             pragma(compiler_version="^0.14.0")
     """
-    pkg_version = pkg_resources.require("pyteal")[0].version
+    pkg_version = metadata.version("pyteal")
     pyteal_version = Version(__convert_pep440_compiler_version(pkg_version))
     if pyteal_version not in NpmSpec(
         __convert_pep440_compiler_version(compiler_version)

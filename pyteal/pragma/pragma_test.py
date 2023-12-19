@@ -1,5 +1,5 @@
 import pytest
-import pkg_resources
+from importlib import metadata
 from tests.mock_version import (  # noqa: F401
     mock_version,
 )
@@ -54,8 +54,8 @@ def test_convert_pep440_compiler_version(compiler_version, expected):
             False,
         ),  # Ignores local version (consistent with PEP 440)
         (
-            pkg_resources.require("pyteal")[0].version,
-            pkg_resources.require("pyteal")[0].version,
+            metadata.version("pyteal"),
+            metadata.version("pyteal"),
             False,
         ),
         # invalid

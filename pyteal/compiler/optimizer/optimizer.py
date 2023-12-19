@@ -64,7 +64,7 @@ class OptimizeOptions:
 
 def _remove_extraneous_slot_access(start: TealBlock, remove: Set[ScratchSlot]):
     def keep_op(op: TealOp) -> bool:
-        if type(op) != TealOp or (op.op != Op.store and op.op != Op.load):
+        if type(op) is not TealOp or (op.op != Op.store and op.op != Op.load):
             return True
 
         return not set(op.getSlots()).issubset(remove)
@@ -84,7 +84,7 @@ def _has_load_dependencies(
             if block == cur_block and i == pos:
                 continue
 
-            if type(op) == TealOp and op.op == Op.load and slot in set(op.getSlots()):
+            if type(op) is TealOp and op.op == Op.load and slot in set(op.getSlots()):
                 return True
 
     return False
@@ -96,14 +96,14 @@ def _apply_slot_to_stack(
     slots_to_remove = set()
     # surprisingly, this slicing is totally safe - even if the list is empty.
     for i, op in enumerate(cur_block.ops[:-1]):
-        if type(op) != TealOp or op.op != Op.store:
+        if type(op) is not TealOp or op.op != Op.store:
             continue
 
         if set(op.getSlots()).issubset(skip_slots):
             continue
 
         next_op = cur_block.ops[i + 1]
-        if type(next_op) != TealOp or next_op.op != Op.load:
+        if type(next_op) is not TealOp or next_op.op != Op.load:
             continue
 
         cur_slots, next_slots = op.getSlots(), next_op.getSlots()

@@ -98,7 +98,9 @@ AlgodClientError.__module__ = "pyteal"
 
 
 class SourceMapDisabledError(RuntimeError):
-    msg = value = """
+    msg = (
+        value
+    ) = """
     Cannot calculate Teal to PyTeal source map because stack frame discovery is turned off.
 
     To enable source maps: import `from feature_gates import FeatureGates` and call `FeatureGates.set_sourcemap_enabled(True)`.

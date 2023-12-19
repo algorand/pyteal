@@ -81,7 +81,7 @@ def extractAddrValue(op: TealOp) -> Union[str, bytes]:
         If the op is loading a template variable, returns the name of the variable as a string.
         Otherwise, returns the bytes of the public key of the address that the op is loading.
     """
-    if len(op.args) != 1 or type(op.args[0]) != str:
+    if len(op.args) != 1 or type(op.args[0]) is not str:
         raise TealInternalError("Unexpected args in addr opcode: {}".format(op.args))
 
     value = cast(str, op.args[0])
@@ -96,7 +96,7 @@ def extractMethodSigValue(op: TealOp) -> bytes:
     Returns:
         The bytes of method selector computed from the method signature that the op is loading.
     """
-    if len(op.args) != 1 or type(op.args[0]) != str:
+    if len(op.args) != 1 or type(op.args[0]) is not str:
         raise TealInternalError("Unexpected args in method opcode: {}".format(op.args))
 
     methodSignature = cast(str, op.args[0])

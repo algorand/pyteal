@@ -870,7 +870,7 @@ def test_type_spec_is_assignable_safe_bidirectional_full_coverage(ts: type):
     def exists_in_safe_bidirectional(_ts: type):
         for safe_bidirectional in SAFE_BIDIRECTIONAL_TEST_CASES:
             for t in safe_bidirectional.xs:
-                if type(t) == _ts:
+                if type(t) is _ts:
                     return True
         return False
 
@@ -943,10 +943,10 @@ def test_type_spec_is_assignable_safe_assignment(tc: SafeAssignment):
 def test_type_spec_is_assignable_safe_assignment_full_coverage(ts: type):
     def exists_in_safe_assignment(_ts: type):
         for safe_assignment in SAFE_ASSIGNMENT_TEST_CASES:
-            if type(safe_assignment.a) == _ts:
+            if type(safe_assignment.a) is _ts:
                 return True
             for t in safe_assignment.bs:
-                if type(t) == _ts:
+                if type(t) is _ts:
                     return True
         return False
 
@@ -1049,7 +1049,7 @@ def test_type_spec_is_assignable_unsafe_bidirectional_full_coverage(ts: type):
     def exists_in_unsafe_bidirectional(_ts: type):
         for unsafe_bidirectional in UNSAFE_BIDIRECTIONAL_TEST_CASES:
             for t in unsafe_bidirectional.xs:
-                if type(t) == _ts:
+                if type(t) is _ts:
                     return True
         return False
 

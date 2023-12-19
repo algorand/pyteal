@@ -146,7 +146,7 @@ class OpUp:
         should be sufficient for most use cases. If lack of budget is an issue then
         consider moving the call to ensure_budget() earlier in the pyteal program."""
         require_type(required_budget, TealType.uint64)
-        if not type(fee_source) == OpUpFeeSource:
+        if type(fee_source) is not OpUpFeeSource:
             raise TealTypeError(type(fee_source), OpUpFeeSource)
 
         # A budget buffer is necessary to deal with an edge case of ensure_budget():
@@ -179,7 +179,7 @@ class OpUp:
         sufficient for most use cases. If lack of budget is an issue then consider
         moving the call to maximize_budget() earlier in the pyteal program."""
         require_type(fee, TealType.uint64)
-        if not type(fee_source) == OpUpFeeSource:
+        if type(fee_source) is not OpUpFeeSource:
             raise TealTypeError(type(fee_source), OpUpFeeSource)
 
         i = ScratchVar(TealType.uint64)

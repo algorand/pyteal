@@ -3,7 +3,7 @@ from pathlib import Path
 
 from feature_gates import FeatureGates
 
-FeatureGates.set_sourcemap_enabled(True)
+FeatureGates.set("sourcemap_enabled", True)
 
 
 from pyteal import *  # noqa: E402
@@ -157,4 +157,6 @@ if __name__ == "__main__":
         f.write(results.teal)
 
     with open(EXAMPLES / "dutch_auction_annotated.teal", "w") as f:
+        assert isinstance(results.sourcemap, PyTealSourceMap)
+        assert isinstance(results.sourcemap.annotated_teal, str)
         f.write(results.sourcemap.annotated_teal)

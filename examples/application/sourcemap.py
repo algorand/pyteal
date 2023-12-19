@@ -10,7 +10,7 @@ the side effect of importing expressions that the sourcemapper needs to be aware
 
 from feature_gates import FeatureGates
 
-FeatureGates.set_sourcemap_enabled(True)
+FeatureGates.set("sourcemap_enabled", True)
 
 # INTENTIONALLY importing pyteal and objects _AFTER_ enabling the sourcemap feature
 import pyteal as pt  # noqa: E402
@@ -56,6 +56,8 @@ if __name__ == "__main__":
         f.write(results.teal)
 
     with open(annotated, "w") as f:
+        assert isinstance(results.sourcemap, pt.PyTealSourceMap)
+        assert isinstance(results.sourcemap.annotated_teal, str)
         f.write(results.sourcemap.annotated_teal)
 
     print(f"SUCCESS!!! Please check out {teal} and {annotated}")

@@ -13,13 +13,11 @@ jobs:
     container: python:${{ matrix.python }}
     strategy:
       matrix:
-        python: ["3.10", "3.11"]
+        python: ["3.10", "3.11", "3.12"]
     steps:
       - run: python3 --version
       - name: Check out code
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
       - name: Install Python dependencies, Build, and Test
         run: make setup-build-test
 
@@ -27,12 +25,10 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        python: ["3.10", "3.11"]
+        python: ["3.10", "3.11", "3.12"]
     steps:
       - name: Check out code
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
       - uses: actions/setup-python@v4
         with:
           python-version: "${{ matrix.python }}"
@@ -53,8 +49,6 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
       - uses: actions/setup-python@v4
         with:
           python-version: "${{ matrix.python }}"
@@ -77,8 +71,6 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
       - name: Install dependencies
         run: make setup-wheel
       - name: Build package

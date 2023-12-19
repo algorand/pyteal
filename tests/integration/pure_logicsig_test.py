@@ -95,7 +95,7 @@ def factorizer_game_check(a: int, p: int, q: int, M: int, N: int):
         )
 
     print(
-        f"generating a report for (a,p,q) = {a,p,q} with {M, N} dry-run calls and spreadsheet rows"
+        f"generating a report for (a,p,q) = {a, p, q} with {M, N} dry-run calls and spreadsheet rows"
     )
     filebase = f"factorizer_game_{a}_{p}_{q}"
 
@@ -105,7 +105,9 @@ def factorizer_game_check(a: int, p: int, q: int, M: int, N: int):
     with open(csvpath, "w") as f:
         f.write(Inspector.csv_report(inputs, inspectors, txns=txns))
 
-    print(f"validating passing_invariant for (a,p,q) = {a,p,q} over {N} dry-run calls")
+    print(
+        f"validating passing_invariant for (a,p,q) = {a, p, q} over {N} dry-run calls"
+    )
     passing_invariant = Invariant(
         lambda args: bool(payment_amount(*args)),
         name=f"passing invariant for coeffs {a, p, q}",
@@ -113,7 +115,7 @@ def factorizer_game_check(a: int, p: int, q: int, M: int, N: int):
     passing_invariant.validates(DRProp.passed, inspectors)
 
     print(
-        f"validate procedurally that payment amount as expected for (a,p,q) = {a,p,q} over {M, N} dry-rundry-run calls"
+        f"validate procedurally that payment amount as expected for (a,p,q) = {a, p, q} over {M, N} dry-rundry-run calls"
     )
 
     for args, inspector in zip(inputs, inspectors):
