@@ -13,7 +13,7 @@ services:
       - PROFILE=development
         # Can remove ADMIN_TOKEN if the code stops passing an auth token. The development profile
         # enables the DisableAPIAuth config option, however an unfortunate side effect of this
-        # option is that requests will error if *any* auth token is passed.
+        # option is that requests will error if *any* auth token is passed. Issue: https://github.com/algorand/go-algorand/issues/5883
       - ADMIN_TOKEN=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
     healthcheck:
       test: curl -f http://localhost:8080/health
