@@ -11,7 +11,10 @@ services:
     environment:
       - DEV_MODE=1
       - PROFILE=development
-      - TOKEN=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+        # Can remove ADMIN_TOKEN if the code stops passing an auth token. The development profile
+        # enables the DisableAPIAuth config option, however an unfortunate side effect of this
+        # option is that requests will error if *any* auth token is passed.
+      - ADMIN_TOKEN=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
     healthcheck:
       test: curl -f http://localhost:8080/health
       interval: 2s
