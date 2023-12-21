@@ -30,6 +30,8 @@ Other App Global                                                    :any:`App.gl
 Other App Local                                                     :any:`App.localGetEx`                          :any:`App.localGetEx`
 Current App Boxes  :any:`App.box_create`   :any:`App.box_put`       :any:`App.box_extract`   :any:`App.box_delete` :any:`App.box_length`
                    :any:`App.box_put`      :any:`App.box_replace`   :any:`App.box_get`                             :any:`App.box_get`
+                                           :any:`App.box_splice`
+                                           :any:`App.box_resize`
 ================== ======================= ======================== ======================== ===================== =======================
 
 Global State
@@ -267,8 +269,9 @@ The app account's minimum balance requirement (MBR) is increased with each addit
    If one deletes an application with outstanding boxes, the MBR is not recoverable from the deleted app account.
    It is recommended that *before* app deletion, all box storage be deleted, and funds previously allocated to the MBR be withdrawn.
 
-Box sizes and names cannot be changed after initial allocation, but they can be deleted and re-allocated.
 Boxes are only visible to the application itself; in other words, an application cannot read from or write to another application's boxes on-chain.
+
+Boxes are fixed-length structures, though they can be resized with the :any:`App.box_resize` method (or by deleting and recreating the box).
 
 The following sections explain how to work with boxes.
 
@@ -311,19 +314,67 @@ For :any:`App.box_put`, the first argument is the box name to create or to write
     # write to box `poemLine` with new value
     App.box_put(Bytes("poemLine"), Bytes("The lone and level sands stretch far away."))
 
+Resizing Boxes
+~~~~~~~~~~~~~~
+
+Boxes that already exist can be resized using the :any:`App.box_resize` method. This is the only way to resize a box, besides deleting it and recreating it.
+
+For :any:`App.box_resize`, the first argument is the box name to resize, and the second argument is the new byte size to be allocated.
+
+.. note::
+    If the new size is smaller than the existing box's byte size, then the box will lose the bytes at the end.
+    If the new size is larger than the existing box's byte size, then the box will be padded with zeros at the end.
+
+    For all size changes, the app account's minimum balance requirement (MBR) will be updated accordingly.
+
+For example:
+
+.. code-block:: python
+
+    # resize a box called "BoxA" to byte size 200
+    App.box_resize(Bytes("BoxA"), Int(200))
+
 Writing to a Box
 ~~~~~~~~~~~~~~~~
 
-To write to a box, use :any:`App.box_replace`, or :any:`App.box_put` method.
+To write to a box, use :any:`App.box_replace`, :any:`App.box_splice` , or :any:`App.box_put` method.
 
-:any:`App.box_replace` writes bytes of certain length from a start index in a box.
+:any:`App.box_replace` replaces a range of bytes in a box.
 The first argument is the box name to write into, the second argument is the starting index to write,
 and the third argument is the replacement bytes. For example:
 
 .. code-block:: python
 
-   # replace 2 bytes starting from the 0'th byte  by `Ne` in the box named `wordleBox`
-   App.box_replace(Bytes("wordleBox"), Int(0), Bytes("Ne"))
+   # Assume the box named "wordleBox" initially contains the bytes "cones"
+
+   # Replace 2 bytes starting from index 1 with "ap" in the box named "wordleBox"
+   App.box_replace(Bytes("wordleBox"), Int(1), Bytes("ap"))
+  
+   # The result is that the box named "wordleBox" now contains the bytes "capes"
+
+:any:`App.box_splice` is a more general version of :any:`App.box_replace`. This operation takes an
+additional argument, which is the length of the bytes in the box to be replaced. By specifying a
+different length than the bytes you are inserting, you can shift contents of the box instead of just
+replacing a range of bytes.
+
+For example:
+
+.. code-block:: python
+   
+   # Assume the box named "flavors" initially contains the bytes "banana_apple_cherry_______"
+
+   # Insert "grape_" at index 7 in the box named "flavors". By specifying a length of 0, the
+   # following bytes will be shifted to the right.
+   App.box_splice(Bytes("flavors"), Int(7), Int(0), Bytes("grape_"))
+   
+   # The result is that the box named "flavors" now contains the bytes "banana_grape_apple_cherry_"
+
+   # If we want to zero the box, we can replace the entire contents with an empty string.
+   App.box_splice(Bytes("flavors"), Int(0), Int(26), Bytes(""))
+   # The "flavors" box now contains "00000000000000000000000000". Ready for reuse!
+
+Recall that boxes are fixed length, so shifting bytes can cause the box to truncate or pad with zeros.
+More information is available in the docstring for :any:`App.box_splice`.
 
 :any:`App.box_put` writes the full contents to a pre-existing box, as is mentioned in `Creating Boxes`_.
 

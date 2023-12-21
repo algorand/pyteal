@@ -220,12 +220,14 @@ class BoxSplice(Expr):
         """
         Replaces the range of bytes from `start` through `start + length` with `new_content`.
 
-        Recall that boxes are constant length, so this operation will not change the length of the
+        Bytes after `start + length` will be shifted to the right.
+
+        Recall that boxes are constant length, and this operation will not change the length of the
         box. Instead content may be adjusted as so:
-         * If the length of the new content is less than `length`, zero bytes will be added to the
-           end of the box to make up the difference.
-         * If the length of the new content is greater than `length`, bytes will be truncated from
-           the end of the box to make up the difference.
+
+            * If the length of the new content is less than `length`, the bytes following `start + length` will be shifted to the left, and the end of the box will be padded with zeros.
+
+            * If the length of the new content is greater than `length`, the bytes following `start + length` will be shifted to the right and bytes exceeding the length of the box will be truncated.
 
         Args:
             name: The name of the box to modify. Must evaluate to bytes.
