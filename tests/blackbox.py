@@ -434,7 +434,13 @@ class PyTealDryRunExecutor:
 
         return approval
 
-    def compile(self, version: int, *, assemble_constants: bool = False, assembly_type_track: bool = True) -> str:
+    def compile(
+        self,
+        version: int,
+        *,
+        assemble_constants: bool = False,
+        assembly_type_track: bool = True,
+    ) -> str:
         return compileTeal(
             self.program(),
             self.mode,
