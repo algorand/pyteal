@@ -26,6 +26,9 @@ class GlobalField(Enum):
     opcode_budget = (12, "OpcodeBudget", TealType.uint64, 6)
     caller_app_id = (13, "CallerApplicationID", TealType.uint64, 6)
     caller_app_address = (14, "CallerApplicationAddress", TealType.bytes, 6)
+    asset_create_min_balance = (15, "AssetCreateMinBalance", TealType.uint64, 10)
+    asset_opt_in_min_balance = (16, "AssetOptInMinBalance", TealType.uint64, 10)
+    genesis_hash = (17, "GenesisHash", TealType.bytes, 10)
 
     def __init__(self, id: int, name: str, type: TealType, min_version: int) -> None:
         self.id = id
@@ -158,6 +161,27 @@ class Global(LeafExpr):
 
         Requires program version 6 or higher."""
         return cls(GlobalField.caller_app_address)
+
+    @classmethod
+    def asset_create_min_balance(cls) -> "Global":
+        """Get the additional minimum balance required to create (and opt-into) an asset.
+
+        Requires program version 10 or higher."""
+        return cls(GlobalField.asset_create_min_balance)
+
+    @classmethod
+    def asset_opt_in_min_balance(cls) -> "Global":
+        """Get the additional minimum balance required to opt-into an asset.
+
+        Requires program version 10 or higher."""
+        return cls(GlobalField.asset_opt_in_min_balance)
+
+    @classmethod
+    def genesis_hash(cls) -> "Global":
+        """Get the genesis hash for the network.
+
+        Requires program version 10 or higher."""
+        return cls(GlobalField.genesis_hash)
 
 
 Global.__module__ = "pyteal"
