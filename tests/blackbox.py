@@ -457,7 +457,7 @@ class PyTealDryRunExecutor:
         *,
         compiler_version=6,
         txn_params: TxParams | None = None,
-        verbose: bool = True,
+        verbose: bool = False,
     ) -> list[DryRunInspector]:
         return cast(
             list,
