@@ -36,9 +36,11 @@ from pyteal.ast.asset import (
 from pyteal.ast.acct import AccountParam, AccountParamObject
 from pyteal.ast.box import (
     BoxCreate,
+    BoxResize,
     BoxDelete,
     BoxExtract,
     BoxReplace,
+    BoxSplice,
     BoxLen,
     BoxGet,
     BoxPut,
@@ -212,8 +214,10 @@ __all__ = [
     "BitwiseXor",
     "Block",
     "BoxCreate",
+    "BoxResize",
     "BoxDelete",
     "BoxExtract",
+    "BoxSplice",
     "BoxGet",
     "BoxLen",
     "BoxPut",

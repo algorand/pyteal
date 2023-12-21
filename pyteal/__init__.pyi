@@ -76,6 +76,8 @@ __all__ = [
     "BoxLen",
     "BoxPut",
     "BoxReplace",
+    "BoxResize",
+    "BoxSplice",
     "Break",
     "Btoi",
     "Bytes",
