@@ -37,15 +37,12 @@ def wrap_compile_and_save(
     assemble_constants,
     test_name,
     case_name,
-    *,
-    assembly_type_track: bool = True,
 ):
     is_app = mode == pt.Mode.Application
 
     teal = PyTealDryRunExecutor(subr, mode).compile(
         version,
         assemble_constants=assemble_constants,
-        assembly_type_track=assembly_type_track,
     )
     tealfile = f'{"app" if is_app else "lsig"}_{case_name}_v{version}.teal'
 
@@ -492,14 +489,7 @@ def blackbox_test_runner(
 
     # 1. Compile to TEAL
     teal, _, tealfile = wrap_compile_and_save(
-        subr,
-        mode,
-        version,
-        assemble_constants,
-        "blackbox",
-        case_name,
-        # Temporarily disabling until https://github.com/algorand/go-algorand/pull/5884 is released
-        assembly_type_track=False,
+        subr, mode, version, assemble_constants, "blackbox", case_name
     )
 
     # Fail fast in case algod is not configured:
