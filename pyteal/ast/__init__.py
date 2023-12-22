@@ -171,6 +171,15 @@ from pyteal.ast.maybe import MaybeValue
 from pyteal.ast.multi import MultiValue
 from pyteal.ast.opup import OpUp, OpUpMode, OpUpFeeSource
 from pyteal.ast.ecdsa import EcdsaCurve, EcdsaVerify, EcdsaDecompress, EcdsaRecover
+from pyteal.ast.ec import (
+    EllipticCurve,
+    EcAdd,
+    EcScalarMul,
+    EcPairingCheck,
+    EcMultiScalarMul,
+    EcSubgroupCheck,
+    EcMapTo,
+)
 from pyteal.ast.router import (
     BareCallActions,
     CallConfig,
@@ -256,6 +265,13 @@ __all__ = [
     "EcdsaVerify",
     "Ed25519Verify_Bare",
     "Ed25519Verify",
+    "EllipticCurve",
+    "EcAdd",
+    "EcScalarMul",
+    "EcPairingCheck",
+    "EcMultiScalarMul",
+    "EcSubgroupCheck",
+    "EcMapTo",
     "EnumInt",
     "Eq",
     "Err",

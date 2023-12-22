@@ -52,7 +52,7 @@ def alloc_abstract_var(stack_type: TealType) -> AbstractVar:
         stack_type: TealType that represents stack type.
     """
 
-    from pyteal.ast import ScratchVar
+    from pyteal.ast.scratchvar import ScratchVar
     from pyteal.ast.subroutine import SubroutineEval
     from pyteal.ast.frame import FrameVar, MAX_FRAME_LOCAL_VARS
 

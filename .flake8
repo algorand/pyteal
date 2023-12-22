@@ -23,6 +23,7 @@ per-file-ignores =
     examples/signature/recurring_swap.py:           F403, F405
     examples/signature/split.py:                    F403, F405
     pyteal/__init__.py:                             F401, F403
+    pyteal/ast/ec.py:                               E222
     pyteal/compiler/flatten.py:                     F821
     pyteal/compiler/optimizer/__init__.py:          F401
     pyteal/ir/ops.py:                               E221
