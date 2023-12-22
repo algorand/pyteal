@@ -40,10 +40,7 @@ def wrap_compile_and_save(
 ):
     is_app = mode == pt.Mode.Application
 
-    teal = PyTealDryRunExecutor(subr, mode).compile(
-        version,
-        assemble_constants=assemble_constants,
-    )
+    teal = PyTealDryRunExecutor(subr, mode).compile(version, assemble_constants)
     tealfile = f'{"app" if is_app else "lsig"}_{case_name}_v{version}.teal'
 
     tealdir = GENERATED / test_name
