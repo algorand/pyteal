@@ -6,6 +6,8 @@ avm2Options = pt.CompileOptions(version=2)
 avm3Options = pt.CompileOptions(version=3)
 avm5Options = pt.CompileOptions(version=5)
 avm6Options = pt.CompileOptions(version=6)
+avm9Options = pt.CompileOptions(version=9)
+avm10Options = pt.CompileOptions(version=10)
 
 
 def test_global_min_txn_fee():
@@ -197,3 +199,49 @@ def test_global_caller_app_address():
 
     with pytest.raises(pt.TealInputError):
         expr.__teal__(avm5Options)
+
+
+def test_global_asset_create_min_balance():
+    expr = pt.Global.asset_create_min_balance()
+    assert expr.type_of() == pt.TealType.uint64
+
+    expected = pt.TealSimpleBlock(
+        [pt.TealOp(expr, pt.Op.global_, "AssetCreateMinBalance")]
+    )
+
+    actual, _ = expr.__teal__(avm10Options)
+
+    assert actual == expected
+
+    with pytest.raises(pt.TealInputError):
+        expr.__teal__(avm9Options)
+
+
+def test_global_asset_opt_in_min_balance():
+    expr = pt.Global.asset_opt_in_min_balance()
+    assert expr.type_of() == pt.TealType.uint64
+
+    expected = pt.TealSimpleBlock(
+        [pt.TealOp(expr, pt.Op.global_, "AssetOptInMinBalance")]
+    )
+
+    actual, _ = expr.__teal__(avm10Options)
+
+    assert actual == expected
+
+    with pytest.raises(pt.TealInputError):
+        expr.__teal__(avm9Options)
+
+
+def test_global_genesis_hash():
+    expr = pt.Global.genesis_hash()
+    assert expr.type_of() == pt.TealType.bytes
+
+    expected = pt.TealSimpleBlock([pt.TealOp(expr, pt.Op.global_, "GenesisHash")])
+
+    actual, _ = expr.__teal__(avm10Options)
+
+    assert actual == expected
+
+    with pytest.raises(pt.TealInputError):
+        expr.__teal__(avm9Options)

@@ -2,16 +2,20 @@ version: '3'
 
 services:
   algod:
-    image: wwinder/algod:dev
+    image: algorand/algod:master
     platform: linux/amd64
     ports:
       - "4001:8080" # algod
       - "4160:4160" # gossip
       - "9100:9100" # prometheus
     environment:
-      - DEV_MODE=true
-      - TOKEN=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+      - DEV_MODE=1
+      - PROFILE=development
+        # Can remove ADMIN_TOKEN if the code stops passing an auth token. The development profile
+        # enables the DisableAPIAuth config option, however an unfortunate side effect of this
+        # option is that requests will error if *any* auth token is passed. Issue: https://github.com/algorand/go-algorand/issues/5883
+      - ADMIN_TOKEN=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
     healthcheck:
-      test: goal node status
+      test: curl -f http://localhost:8080/health
       interval: 2s
       retries: 30

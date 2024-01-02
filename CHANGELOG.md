@@ -2,6 +2,21 @@
 
 ## Added
 
+* Support for AVM v10 programs. ([#714](https://github.com/algorand/pyteal/pull/714))
+  * New box operations:
+    * `App.box_resize`
+    * `App.box_splice`
+  * New `Global` fields:
+    * `Global.asset_create_min_balance()`
+    * `Global.asset_opt_in_min_balance()`
+    * `Global.genesis_hash()`
+  * New elliptic curve operations:
+    * `EcAdd`
+    * `EcScalarMul`
+    * `EcPairingCheck`
+    * `EcMultiScalarMul`
+    * `EcSubgroupCheck`
+    * `EcMapTo`
 * Support for Python 3.12. ([#713](https://github.com/algorand/pyteal/pull/713))
 
 ## Fixed

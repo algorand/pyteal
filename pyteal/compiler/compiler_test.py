@@ -217,6 +217,20 @@ return
     assert actual == expected
 
 
+def test_compile_no_assembly_type_tracking():
+    expr = pt.Int(1)
+    expected = """
+#pragma version 6
+#pragma typetrack false
+int 1
+return
+""".strip()
+    actual = pt.compileTeal(
+        expr, pt.Mode.Signature, version=6, assembly_type_track=False
+    )
+    assert actual == expected
+
+
 def test_slot_load_before_store():
     program = pt.AssetHolding.balance(pt.Int(0), pt.Int(0)).value()
     with pytest.raises(pt.TealInternalError):

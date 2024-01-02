@@ -1,7 +1,8 @@
 from enum import Enum
 from typing import Tuple, TYPE_CHECKING
 
-from pyteal.ast import Expr, MultiValue
+from pyteal.ast.expr import Expr
+from pyteal.ast.multi import MultiValue
 from pyteal.errors import (
     TealTypeError,
     verifyFieldVersion,

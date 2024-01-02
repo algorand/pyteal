@@ -31,7 +31,12 @@ SKIP_SCRATCH_ASSERTIONS = not STABLE_SLOT_GENERATION
 
 
 def wrap_compile_and_save(
-    subr, mode, version, assemble_constants, test_name, case_name
+    subr,
+    mode,
+    version,
+    assemble_constants,
+    test_name,
+    case_name,
 ):
     is_app = mode == pt.Mode.Application
 

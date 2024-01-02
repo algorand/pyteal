@@ -85,7 +85,7 @@ algod-stop:
 	docker compose stop algod
 
 test-integ-async:
-	pytest -n auto --durations=10 -sv tests/integration -m "not serial"
+	pytest -n auto --durations=10 tests/integration -m "not serial"
 
 # Run tests w/ @pytest.mark.serial under ~/tests/integration each in its own proc:
 test-integ-sync:

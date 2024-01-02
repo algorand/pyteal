@@ -222,9 +222,9 @@ Global Parameters
 Information about the current state of the blockchain can be obtained using the following
 :any:`Global` expressions:
 
-=========================================== ======================= ==================== =============================================================
+=========================================== ======================= ==================== ===================================================================================================================
 Operator                                    Type                    Min Program Version  Notes
-=========================================== ======================= ==================== =============================================================
+=========================================== ======================= ==================== ===================================================================================================================
 :any:`Global.min_txn_fee()`                 :code:`TealType.uint64` 2                    in microAlgos
 :any:`Global.min_balance()`                 :code:`TealType.uint64` 2                    in microAlgos
 :any:`Global.max_txn_life()`                :code:`TealType.uint64` 2                    number of rounds
@@ -237,4 +237,10 @@ Operator                                    Type                    Min Program 
 :any:`Global.creator_address()`             :code:`TealType.bytes`  3                    32 byte address of the creator of the current application
 :any:`Global.current_application_address()` :code:`TealType.bytes`  5                    32 byte address of the current application controlled account
 :any:`Global.group_id()`                    :code:`TealType.bytes`  5                    32 byte ID of the current transaction group
-=========================================== ======================= ==================== =============================================================
+:any:`Global.opcode_budget()`               :code:`TealType.uint64` 6                    The remaining cost that can be spent by opcodes in this program
+:any:`Global.caller_app_id()`               :code:`TealType.uint64` 6                    The ID of the application that called the current application, or zero. Application mode only
+:any:`Global.caller_app_address()`          :code:`TealType.bytes`  6                    32 byte address of the application that called the current application, or the zero address. Application mode only.
+:any:`Global.asset_create_min_balance()`    :code:`TealType.uint64` 10                   The minimum balance required to create and opt into an asset
+:any:`Global.asset_opt_in_min_balance()`    :code:`TealType.uint64` 10                   The minimum balance required to opt in to an asset
+:any:`Global.genesis_hash()`                :code:`TealType.bytes`  10                   The genesis hash for the network
+=========================================== ======================= ==================== ===================================================================================================================

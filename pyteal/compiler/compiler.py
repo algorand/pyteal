@@ -35,7 +35,7 @@ from pyteal.types import TealType
 from pyteal.util import algod_with_assertion
 
 
-MAX_PROGRAM_VERSION = 9
+MAX_PROGRAM_VERSION = 10
 FRAME_POINTERS_VERSION = 8
 DEFAULT_SCRATCH_SLOT_OPTIMIZE_VERSION = 9
 MIN_PROGRAM_VERSION = 2
@@ -306,6 +306,7 @@ class Compilation:
         *,
         version: int = DEFAULT_PROGRAM_VERSION,
         assemble_constants: bool = False,
+        assembly_type_track: bool = True,
         optimize: OptimizeOptions | None = None,
     ):
         """
@@ -322,12 +323,17 @@ class Compilation:
                 constants will be assembled in the most space-efficient way, so enabling this may reduce
                 the compiled program's size. Enabling this option requires a minimum program version of 3.
                 Defaults to `False`.
+            assembly_type_track (optional): When `True`, the compiler will produce a program with type
+                checking at assembly time (default behavior). When `False`, the compiler will turn off
+                type checking at assembly time. This is only useful if PyTeal is producing incorrect
+                TEAL code, or the assembler is producing incorrect type errors. Defaults to `True`.
             optimize (optional): `OptimizeOptions` that determine which optimizations will be applied.
         """
         self.ast = ast
         self.mode = mode
         self.version = version
         self.assemble_constants = assemble_constants
+        self.assembly_type_track = assembly_type_track
         self.optimize: OptimizeOptions = optimize or OptimizeOptions()
 
     def compile(
@@ -473,7 +479,11 @@ class Compilation:
                 )
             components = createConstantBlocks(components)
 
-        components = [TealPragma(self.version)] + components  # T2PT0
+        componentsPrefix: list[TealComponent] = [TealPragma(version=self.version)]
+        if not self.assembly_type_track:
+            componentsPrefix.append(TealPragma(type_track=False))
+
+        components = componentsPrefix + components  # T2PT0
         teal_chunks = [tl.assemble() for tl in components]
         teal_code = "\n".join(teal_chunks)
 
@@ -536,6 +546,7 @@ def compileTeal(
     *,
     version: int = DEFAULT_PROGRAM_VERSION,
     assembleConstants: bool = False,
+    assembly_type_track: bool = True,
     optimize: OptimizeOptions | None = None,
 ) -> str:
     """Compile a PyTeal expression into TEAL assembly.
@@ -551,6 +562,10 @@ def compileTeal(
             constants will be assembled in the most space-efficient way, so enabling this may reduce
             the compiled program's size. Enabling this option requires a minimum program version of 3.
             Defaults to false.
+        assembly_type_track (optional): When `True`, the compiler will produce a program with type
+            checking at assembly time (default behavior). When `False`, the compiler will turn off
+            type checking at assembly time. This is only useful if PyTeal is producing incorrect
+            TEAL code, or the assembler is producing incorrect type errors. Defaults to `True`.
         optimize (optional): OptimizeOptions that determine which optimizations will be applied.
 
     Returns:
@@ -565,6 +580,7 @@ def compileTeal(
         mode,
         version=version,
         assemble_constants=assembleConstants,
+        assembly_type_track=assembly_type_track,
         optimize=optimize,
     )._compile_impl(with_sourcemap=False)
     return bundle.teal

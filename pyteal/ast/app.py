@@ -2,9 +2,11 @@ from typing import TYPE_CHECKING, Final
 from enum import Enum
 from pyteal.ast.box import (
     BoxCreate,
+    BoxResize,
     BoxDelete,
     BoxExtract,
     BoxReplace,
+    BoxSplice,
     BoxLen,
     BoxGet,
     BoxPut,
@@ -238,6 +240,19 @@ class App(LeafExpr):
         return BoxCreate(name, size)
 
     @classmethod
+    def box_resize(cls, name: Expr, size: Expr) -> Expr:
+        """Resize an existing box.
+
+        If the new size is larger than the old size, zero bytes will be added to the end of the box.
+        If the new size is smaller than the old size, the box will be truncated from the end.
+
+        Args:
+            name: The key used to reference this box. Must evaluate to a bytes.
+            size: The new number of bytes to reserve for this box. Must evaluate to a uint64.
+        """
+        return BoxResize(name, size)
+
+    @classmethod
     def box_delete(cls, name: Expr) -> Expr:
         """Deletes a box given it's name.
 
@@ -271,6 +286,30 @@ class App(LeafExpr):
             value: The value to start writing at start index. Must evaluate to bytes.
         """
         return BoxReplace(name, start, value)
+
+    @classmethod
+    def box_splice(
+        cls, name: Expr, start: Expr, length: Expr, new_content: Expr
+    ) -> Expr:
+        """
+        Replaces the range of bytes from `start` through `start + length` with `new_content`.
+
+        Bytes after `start + length` will be shifted to the right.
+
+        Recall that boxes are constant length, and this operation will not change the length of the
+        box. Instead content may be adjusted as so:
+
+            * If the length of the new content is less than `length`, the bytes following `start + length` will be shifted to the left, and the end of the box will be padded with zeros.
+
+            * If the length of the new content is greater than `length`, the bytes following `start + length` will be shifted to the right and bytes exceeding the length of the box will be truncated.
+
+        Args:
+            name: The name of the box to modify. Must evaluate to bytes.
+            start: The byte index into the box to start writing. Must evaluate to uint64.
+            length: The length of the bytes to be replaced. Must evaluate to uint64.
+            new_content: The new content to write into the box. Must evaluate to bytes.
+        """
+        return BoxSplice(name, start, length, new_content)
 
     @classmethod
     def box_length(cls, name: Expr) -> MaybeValue:
