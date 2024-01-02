@@ -2,6 +2,14 @@
 
 ## Added
 
+## Fixed
+
+## Changed
+
+# v0.26.0
+
+## Added
+
 * Support for AVM v10 programs. ([#714](https://github.com/algorand/pyteal/pull/714))
   * New box operations:
     * `App.box_resize`
@@ -18,10 +26,6 @@
     * `EcSubgroupCheck`
     * `EcMapTo`
 * Support for Python 3.12. ([#713](https://github.com/algorand/pyteal/pull/713))
-
-## Fixed
-
-## Changed
 
 # v0.25.0
 
