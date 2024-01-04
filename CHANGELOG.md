@@ -6,6 +6,12 @@
 
 ## Changed
 
+# v0.26.1
+
+## Fixed
+
+* Correct `EcPairingCheck` & `EcSubgroupCheck` return types ([#717](https://github.com/algorand/pyteal/pull/717))
+
 # v0.26.0
 
 ## Added
