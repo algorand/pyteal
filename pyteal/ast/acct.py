@@ -84,7 +84,7 @@ class AccountParam:
 
     @classmethod
     def authAddr(cls, acct: Expr) -> MaybeValue:
-        """Get the authorizing address for an account. If the account is not rekeyed, the empty addresss is returned.
+        """Get the authorizing address for an account. If the account is not rekeyed, the empty address is returned.
 
         Args:
             acct: An index into Txn.accounts that corresponds to the application to check or an address available at runtime.

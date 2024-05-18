@@ -195,7 +195,7 @@ class TealBlock(ABC):
         functionality of its underlying program, however it does mutate the input graph.
 
         Returns:
-            The new starting point of the altered graph. May be the same or differant than start.
+            The new starting point of the altered graph. May be the same or different than start.
         """
         for block in TealBlock.Iterate(start):
             if len(block.incoming) == 1:
