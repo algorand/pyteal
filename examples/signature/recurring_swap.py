@@ -14,7 +14,7 @@ Whenever a service provider (a hospital, for example) authorize a payment,
 it submits a transaction with its signature of first_valid in the arguement and with
 the first_valid in the lease to prevent replay attacks.
 
-The hospital may some extra information about the transaction in the note 
+The hospital may add some extra information about the transaction in the note 
 field for audit purpose.
 
 After timeout, the buyer can claw the remaining balance back.
