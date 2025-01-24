@@ -23,6 +23,9 @@ avm8Options = pt.CompileOptions(version=8)
         ("totalAssets", "total_assets"),
         ("totalBoxes", "total_boxes"),
         ("totalBoxBytes", "total_box_bytes"),
+        ("incentiveEligible", "incentive_eligible"),
+        ("lastProposed", "last_proposed"),
+        ("lastHeartbeat", "last_heartbeat"),
     ],
 )
 class TestAcctParam:

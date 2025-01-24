@@ -26,6 +26,9 @@ class AccountParamField(Enum):
     total_assets          = (9,  "AcctTotalAssets",        TealType.uint64, 8)  # noqa: E221
     total_boxes           = (10, "AcctTotalBoxes",         TealType.uint64, 8)  # noqa: E221
     total_box_bytes       = (11, "AcctTotalBoxBytes",      TealType.uint64, 8)  # noqa: E221
+    incentive_eligible    = (12, "AcctIncentiveEligible",  TealType.uint64, 11)  # noqa: E221
+    last_proposed         = (13, "AcctLastProposed",       TealType.uint64, 11)  # noqa: E221
+    last_heartbeat        = (14, "AcctLastHeartbeat",      TealType.uint64, 11)  # noqa: E221
     # fmt: on
 
     def __init__(self, id: int, name: str, type: TealType, min_version: int) -> None:
@@ -200,6 +203,42 @@ class AccountParam:
         """
         return cls.__makeAccountParamExpr(AccountParamField.total_box_bytes, acct)
 
+    @classmethod
+    def incentiveEligible(cls, acct: Expr) -> MaybeValue:
+        """Get account's eligibility status for block incentives.
+
+        Requires program version 11 or higher.
+
+        Args:
+            acct: An index into Txn.accounts that corresponds to the application to check or an address available at runtime.
+                May evaluate to uint64 or an address.
+        """
+        return cls.__makeAccountParamExpr(AccountParamField.incentive_eligible, acct)
+
+    @classmethod
+    def lastProposed(cls, acct: Expr) -> MaybeValue:
+        """Get the last round for which this account proposed the accepted block.
+
+        Requires program version 11 or higher.
+
+        Args:
+            acct: An index into Txn.accounts that corresponds to the application to check or an address available at runtime.
+                May evaluate to uint64 or an address.
+        """
+        return cls.__makeAccountParamExpr(AccountParamField.last_proposed, acct)
+
+    @classmethod
+    def lastHeartbeat(cls, acct: Expr) -> MaybeValue:
+        """Get the highest round for which this account should be considered non-absent for reasons other than proposing.
+
+        Requires program version 11 or higher.
+
+        Args:
+            acct: An index into Txn.accounts that corresponds to the application to check or an address available at runtime.
+                May evaluate to uint64 or an address.
+        """
+        return cls.__makeAccountParamExpr(AccountParamField.last_heartbeat, acct)
+
 
 AccountParam.__module__ = "pyteal"
 
@@ -265,6 +304,18 @@ class AccountParamObject:
     def total_box_bytes(self) -> MaybeValue:
         """Get the total number of bytes used by the account's app's box keys and values."""
         return AccountParam.totalBoxBytes(self._account)
+
+    def incentive_eligible(self) -> MaybeValue:
+        """Get account's eligibility status for block incentives."""
+        return AccountParam.incentiveEligible(self._account)
+
+    def last_proposed(self) -> MaybeValue:
+        """Get the last round for which this account proposed the accepted block."""
+        return AccountParam.lastProposed(self._account)
+
+    def last_heartbeat(self) -> MaybeValue:
+        """Get the highest round for which this account should be considered non-absent for reasons other than proposing."""
+        return AccountParam.lastHeartbeat(self._account)
 
 
 AccountParamObject.__module__ = "pyteal"

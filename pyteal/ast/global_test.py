@@ -8,6 +8,7 @@ avm5Options = pt.CompileOptions(version=5)
 avm6Options = pt.CompileOptions(version=6)
 avm9Options = pt.CompileOptions(version=9)
 avm10Options = pt.CompileOptions(version=10)
+avm11Options = pt.CompileOptions(version=11)
 
 
 def test_global_min_txn_fee():
@@ -245,3 +246,75 @@ def test_global_genesis_hash():
 
     with pytest.raises(pt.TealInputError):
         expr.__teal__(avm9Options)
+
+
+def test_global_payouts_enabled():
+    expr = pt.Global.payouts_enabled()
+    assert expr.type_of() == pt.TealType.uint64
+
+    expected = pt.TealSimpleBlock([pt.TealOp(expr, pt.Op.global_, "PayoutsEnabled")])
+
+    actual, _ = expr.__teal__(avm11Options)
+
+    assert actual == expected
+
+    with pytest.raises(pt.TealInputError):
+        expr.__teal__(avm10Options)
+
+
+def test_global_payouts_go_online_fee():
+    expr = pt.Global.payouts_go_online_fee()
+    assert expr.type_of() == pt.TealType.uint64
+
+    expected = pt.TealSimpleBlock(
+        [pt.TealOp(expr, pt.Op.global_, "PayoutsGoOnlineFee")]
+    )
+
+    actual, _ = expr.__teal__(avm11Options)
+
+    assert actual == expected
+
+    with pytest.raises(pt.TealInputError):
+        expr.__teal__(avm10Options)
+
+
+def test_global_payouts_percent():
+    expr = pt.Global.payouts_percent()
+    assert expr.type_of() == pt.TealType.uint64
+
+    expected = pt.TealSimpleBlock([pt.TealOp(expr, pt.Op.global_, "PayoutsPercent")])
+
+    actual, _ = expr.__teal__(avm11Options)
+
+    assert actual == expected
+
+    with pytest.raises(pt.TealInputError):
+        expr.__teal__(avm10Options)
+
+
+def test_global_payouts_min_balance():
+    expr = pt.Global.payouts_min_balance()
+    assert expr.type_of() == pt.TealType.uint64
+
+    expected = pt.TealSimpleBlock([pt.TealOp(expr, pt.Op.global_, "PayoutsMinBalance")])
+
+    actual, _ = expr.__teal__(avm11Options)
+
+    assert actual == expected
+
+    with pytest.raises(pt.TealInputError):
+        expr.__teal__(avm10Options)
+
+
+def test_global_payouts_max_balance():
+    expr = pt.Global.payouts_max_balance()
+    assert expr.type_of() == pt.TealType.uint64
+
+    expected = pt.TealSimpleBlock([pt.TealOp(expr, pt.Op.global_, "PayoutsMaxBalance")])
+
+    actual, _ = expr.__teal__(avm11Options)
+
+    assert actual == expected
+
+    with pytest.raises(pt.TealInputError):
+        expr.__teal__(avm10Options)
