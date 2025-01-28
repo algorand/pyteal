@@ -1,4 +1,4 @@
-from typing import cast, Union, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from pyteal.types import TealType
 from pyteal.ir import TealOp, Op, TealBlock

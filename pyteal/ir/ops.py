@@ -43,6 +43,7 @@ class Op(Enum):
     sha256              = OpType("sha256",              Mode.Signature | Mode.Application,  2)
     keccak256           = OpType("keccak256",           Mode.Signature | Mode.Application,  2)
     sha512_256          = OpType("sha512_256",          Mode.Signature | Mode.Application,  2)
+    mimc                = OpType("mimc",                Mode.Signature | Mode.Application,  11)
     ed25519verify       = OpType("ed25519verify",       Mode.Signature | Mode.Application,  2)
     add                 = OpType("+",                   Mode.Signature | Mode.Application,  2)
     minus               = OpType("-",                   Mode.Signature | Mode.Application,  2)

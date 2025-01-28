@@ -10,19 +10,20 @@ Simple TEAL opcodes have cost `1`, and more advanced cryptographic operations ha
 Below is how you express cryptographic primitives in PyTeal:
 
 
-==================================== ========= ==================================================================================================================
-Operator                             Cost      Description
-==================================== ========= ==================================================================================================================
-:code:`Sha256(e)`                    `35`      `SHA-256` hash function, produces 32 bytes
-:code:`Sha3_256(e)`                  `130`     `SHA3-256` hash function, produces 32 bytes
-:code:`Keccak256(e)`                 `130`     `Keccak-256` hash funciton, produces 32 bytes
-:code:`Sha512_256(e)`                `45`      `SHA-512/256` hash function, produces 32 bytes
-:code:`Ed25519Verify(d, s, p)`       `1900`\*  `1` if :code:`s` is the signature of the concatenation :code:`("ProgData" + hash_of_current_program + d)` signed by the private key corresponding to the public key :code:`p`, else `0`
-:code:`Ed25519Verify_Bare(d, s, p)`  `1900`    `1` if :code:`s` is the signature of :code:`d` signed by the private key corresponding to the public key :code:`p`, else `0`
-:code:`EcdsaVerify(c, d, r, s, pk)`  `1700`    `1` if :code:`(r, s)` is the signature of :code:`d` by private key corresponding to public key :code:`pk`, else 0
-:code:`EcdsaDecompress(c, short_pk)` `650`     produces the decompressed public key associated with the compressed public key :code:`short_pk`
-:code:`EcdsaRecover(c, d, id, r, s)` `2000`    produces the public key associated with the signature :code:`(r, s)` and recovery id :code:`id`
-==================================== ========= ==================================================================================================================
+==================================== =========== ==================================================================================================================
+Operator                             Cost        Description
+==================================== =========== ==================================================================================================================
+:code:`Sha256(e)`                    `35`        `SHA-256` hash function, produces 32 bytes
+:code:`Sha3_256(e)`                  `130`       `SHA3-256` hash function, produces 32 bytes
+:code:`Keccak256(e)`                 `130`       `Keccak-256` hash funciton, produces 32 bytes
+:code:`Sha512_256(e)`                `45`        `SHA-512/256` hash function, produces 32 bytes
+:code:`MiMC(e)`                      `10+550/32` `MiMC` hash function, produces 32 bytes
+:code:`Ed25519Verify(d, s, p)`       `1900`\*    `1` if :code:`s` is the signature of the concatenation :code:`("ProgData" + hash_of_current_program + d)` signed by the private key corresponding to the public key :code:`p`, else `0`
+:code:`Ed25519Verify_Bare(d, s, p)`  `1900`      `1` if :code:`s` is the signature of :code:`d` signed by the private key corresponding to the public key :code:`p`, else `0`
+:code:`EcdsaVerify(c, d, r, s, pk)`  `1700`      `1` if :code:`(r, s)` is the signature of :code:`d` by private key corresponding to public key :code:`pk`, else 0
+:code:`EcdsaDecompress(c, short_pk)` `650`       produces the decompressed public key associated with the compressed public key :code:`short_pk`
+:code:`EcdsaRecover(c, d, id, r, s)` `2000`      produces the public key associated with the signature :code:`(r, s)` and recovery id :code:`id`
+==================================== =========== ==================================================================================================================
 
 \* :code:`Ed25519Verify` is only available in signature mode up to version 4 of AVM. From version 5 upwards, `Ed25519Verify` can be used in any mode.
 

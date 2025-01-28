@@ -132,6 +132,7 @@ from pyteal.ast.ternaryexpr import (
 from pyteal.ast.substring import Substring, Extract, Suffix
 from pyteal.ast.replace import Replace
 from pyteal.ast.jsonref import JsonRef
+from pyteal.ast.mimc import MiMC
 
 # quaternary ops
 from pyteal.ast.vrfverify import VrfVerify
@@ -317,6 +318,7 @@ __all__ = [
     "MethodSignature",
     "MinBalance",
     "Minus",
+    "MiMC",
     "Mod",
     "Mul",
     "MultiValue",
