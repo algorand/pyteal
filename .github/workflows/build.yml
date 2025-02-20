@@ -58,7 +58,7 @@ jobs:
         run: make bundle-docs
       - name: Archive docset
         if: ${{ !env.ACT }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: pyteal.docset
           path: docs/pyteal.docset.tar.gz
