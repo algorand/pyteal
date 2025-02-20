@@ -6,7 +6,7 @@ on:
 jobs:
   nightly-slow-unit-tests:
     name: build-test + nightly-slow if changes in the previous 24 hours
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     container: python:${{ matrix.python }}
     strategy:
       matrix:
@@ -27,7 +27,7 @@ jobs:
 
   nightly-run-integration-tests:
     name: run-integration-tests if changes in the previous 24 hours
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         python: ["3.10", "3.11", "3.12"]
