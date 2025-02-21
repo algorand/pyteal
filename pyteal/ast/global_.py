@@ -29,6 +29,11 @@ class GlobalField(Enum):
     asset_create_min_balance = (15, "AssetCreateMinBalance", TealType.uint64, 10)
     asset_opt_in_min_balance = (16, "AssetOptInMinBalance", TealType.uint64, 10)
     genesis_hash = (17, "GenesisHash", TealType.bytes, 10)
+    payouts_enabled = (18, "PayoutsEnabled", TealType.uint64, 11)
+    payouts_go_online_fee = (19, "PayoutsGoOnlineFee", TealType.uint64, 11)
+    payouts_percent = (20, "PayoutsPercent", TealType.uint64, 11)
+    payouts_min_balance = (21, "PayoutsMinBalance", TealType.uint64, 11)
+    payouts_max_balance = (22, "PayoutsMaxBalance", TealType.uint64, 11)
 
     def __init__(self, id: int, name: str, type: TealType, min_version: int) -> None:
         self.id = id
@@ -182,6 +187,41 @@ class Global(LeafExpr):
 
         Requires program version 10 or higher."""
         return cls(GlobalField.genesis_hash)
+
+    @classmethod
+    def payouts_enabled(cls) -> "Global":
+        """Get the enabled status for block incentives.
+
+        Requires program version 11 or higher."""
+        return cls(GlobalField.payouts_enabled)
+
+    @classmethod
+    def payouts_go_online_fee(cls) -> "Global":
+        """Get the fee that must be paid for an account to become eligible for block incentives.
+
+        Requires program version 11 or higher."""
+        return cls(GlobalField.payouts_go_online_fee)
+
+    @classmethod
+    def payouts_percent(cls) -> "Global":
+        """Get the percentage of fees in a block that will be paid to the proposer.
+
+        Requires program version 11 or higher."""
+        return cls(GlobalField.payouts_percent)
+
+    @classmethod
+    def payouts_min_balance(cls) -> "Global":
+        """Get the lowest balance a proposer must have to earn a block incentive.
+
+        Requires program version 11 or higher."""
+        return cls(GlobalField.payouts_min_balance)
+
+    @classmethod
+    def payouts_max_balance(cls) -> "Global":
+        """Get the highest balance a proposer must have to earn a block incentive.
+
+        Requires program version 11 or higher."""
+        return cls(GlobalField.payouts_max_balance)
 
 
 Global.__module__ = "pyteal"

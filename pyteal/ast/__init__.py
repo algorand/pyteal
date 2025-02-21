@@ -25,6 +25,7 @@ from pyteal.ast.gaid import GeneratedID
 from pyteal.ast.gitxn import Gitxn, GitxnExpr, GitxnaExpr, InnerTxnGroup
 from pyteal.ast.gload import ImportScratchValue
 from pyteal.ast.global_ import Global, GlobalField
+from pyteal.ast.stake import OnlineStake
 
 from pyteal.ast.app import App, AppField, OnComplete, AppParam, AppParamObject
 from pyteal.ast.asset import (
@@ -45,6 +46,7 @@ from pyteal.ast.box import (
     BoxGet,
     BoxPut,
 )
+from pyteal.ast.voter import VoterParam, VoterParamObject
 
 # inner txns
 from pyteal.ast.itxn import InnerTxnBuilder, InnerTxn, InnerTxnAction
@@ -130,6 +132,7 @@ from pyteal.ast.ternaryexpr import (
 from pyteal.ast.substring import Substring, Extract, Suffix
 from pyteal.ast.replace import Replace
 from pyteal.ast.jsonref import JsonRef
+from pyteal.ast.mimc import MiMC
 
 # quaternary ops
 from pyteal.ast.vrfverify import VrfVerify
@@ -315,6 +318,7 @@ __all__ = [
     "MethodSignature",
     "MinBalance",
     "Minus",
+    "MiMC",
     "Mod",
     "Mul",
     "MultiValue",
@@ -324,6 +328,7 @@ __all__ = [
     "Not",
     "OnComplete",
     "OnCompleteAction",
+    "OnlineStake",
     "OpUp",
     "OpUpFeeSource",
     "OpUpMode",
@@ -367,6 +372,8 @@ __all__ = [
     "TxnObject",
     "TxnType",
     "UnaryExpr",
+    "VoterParam",
+    "VoterParamObject",
     "VrfVerify",
     "While",
     "WideRatio",
