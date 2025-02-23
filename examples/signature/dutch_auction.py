@@ -50,7 +50,7 @@ def dutch_auction(
     redeem_round=tmpl_redeem_round,
     wrapup_time=tmpl_wrapup_time,
 ):
-    # the definition of i simplifies the original desgin by only constraining last_valid here
+    # the definition of i simplifies the original design by only constraining last_valid here
     i_upper = (Gtxn[0].last_valid() - start_round) / period
 
     bid = And(

@@ -494,7 +494,7 @@ class TxnObject:
     def group_index(self) -> TxnExpr:
         """Get the position of the transaction within the atomic transaction group.
 
-        A stand-alone transaction is implictly element 0 in a group of 1.
+        A stand-alone transaction is implicitly element 0 in a group of 1.
 
         For more information, see https://developer.algorand.org/docs/reference/transactions/#group
         """
