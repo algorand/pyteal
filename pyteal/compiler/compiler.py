@@ -235,9 +235,9 @@ def sort_subroutine_blocks(
     subroutine_start_blocks: Dict[Optional[SubroutineDefinition], TealBlock],
     subroutine_end_blocks: Dict[Optional[SubroutineDefinition], TealBlock],
 ) -> Dict[Optional[SubroutineDefinition], List[TealComponent]]:
-    subroutine_mapping: Dict[
-        Optional[SubroutineDefinition], List[TealComponent]
-    ] = dict()
+    subroutine_mapping: Dict[Optional[SubroutineDefinition], List[TealComponent]] = (
+        dict()
+    )
     for subroutine, start in subroutine_start_blocks.items():
         order = sortBlocks(start, subroutine_end_blocks[subroutine])
         subroutine_mapping[subroutine] = flattenBlocks(order)
@@ -428,9 +428,9 @@ class Compilation:
         )
 
         subroutineGraph: Dict[SubroutineDefinition, Set[SubroutineDefinition]] = dict()
-        subroutine_start_blocks: Dict[
-            Optional[SubroutineDefinition], TealBlock
-        ] = dict()
+        subroutine_start_blocks: Dict[Optional[SubroutineDefinition], TealBlock] = (
+            dict()
+        )
         subroutine_end_blocks: Dict[Optional[SubroutineDefinition], TealBlock] = dict()
         compileSubroutine(
             self.ast,
@@ -452,13 +452,13 @@ class Compilation:
             for start in subroutine_start_blocks.values():
                 apply_global_optimizations(start, options.optimize, self.version)
 
-        localSlotAssignments: Dict[
-            Optional[SubroutineDefinition], Set[int]
-        ] = assignScratchSlotsToSubroutines(subroutine_start_blocks)
+        localSlotAssignments: Dict[Optional[SubroutineDefinition], Set[int]] = (
+            assignScratchSlotsToSubroutines(subroutine_start_blocks)
+        )
 
-        subroutineMapping: Dict[
-            Optional[SubroutineDefinition], List[TealComponent]
-        ] = sort_subroutine_blocks(subroutine_start_blocks, subroutine_end_blocks)
+        subroutineMapping: Dict[Optional[SubroutineDefinition], List[TealComponent]] = (
+            sort_subroutine_blocks(subroutine_start_blocks, subroutine_end_blocks)
+        )
 
         spillLocalSlotsDuringRecursion(
             self.version, subroutineMapping, subroutineGraph, localSlotAssignments

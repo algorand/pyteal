@@ -100,13 +100,11 @@ Seq.__module__ = "pyteal"
 
 
 @overload
-def _use_seq_if_multiple(exprs: list[Expr]) -> Expr:
-    ...
+def _use_seq_if_multiple(exprs: list[Expr]) -> Expr: ...
 
 
 @overload
-def _use_seq_if_multiple(*exprs: Expr) -> Expr:
-    ...
+def _use_seq_if_multiple(*exprs: Expr) -> Expr: ...
 
 
 def _use_seq_if_multiple(*exprs):
