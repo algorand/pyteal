@@ -144,9 +144,7 @@ class SubroutineDefinition:
 
         self.stack_frames: NatalStackFrame = NatalStackFrame()
 
-    def _validate(
-        self, input_types: list[TealType | None] | None = None
-    ) -> tuple[
+    def _validate(self, input_types: list[TealType | None] | None = None) -> tuple[
         MappingProxyType[str, Parameter],
         dict[str, type],
         list[type[Expr] | type[ScratchVar] | abi.TypeSpec],

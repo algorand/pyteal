@@ -60,9 +60,9 @@ QUESTIONABLE_DRIVER: list[tuple[RouterCallType, pt.MethodConfig, Predicates]] = 
         {
             DRProp.passed: lambda args: args[1] >= args[2],
             DRProp.lastLog: (
-                lambda args, actual: True
-                if args[1] < args[2]
-                else actual == args[1] - args[2]
+                lambda args, actual: (
+                    True if args[1] < args[2] else actual == args[1] - args[2]
+                )
             ),
         },
     ),

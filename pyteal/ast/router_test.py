@@ -725,7 +725,10 @@ def test_wrap_handler_method_call():
             evaluate = abi_subroutine(*args)
 
         expected = assemble_helper(pt.Seq(*loading, evaluate, pt.Approve()))
-        with pt.TealComponent.Context.ignoreScratchSlotEquality(), pt.TealComponent.Context.ignoreExprEquality():
+        with (
+            pt.TealComponent.Context.ignoreScratchSlotEquality(),
+            pt.TealComponent.Context.ignoreExprEquality(),
+        ):
             assert actual == expected
 
         assert pt.TealBlock.MatchScratchSlotReferences(
@@ -759,7 +762,10 @@ def test_wrap_handler_method_txn_types():
     )
 
     expected = assemble_helper(expected_ast)
-    with pt.TealComponent.Context.ignoreScratchSlotEquality(), pt.TealComponent.Context.ignoreExprEquality():
+    with (
+        pt.TealComponent.Context.ignoreScratchSlotEquality(),
+        pt.TealComponent.Context.ignoreExprEquality(),
+    ):
         assert actual == expected
 
     assert pt.TealBlock.MatchScratchSlotReferences(
@@ -805,7 +811,10 @@ def test_wrap_handler_method_call_many_args():
         pt.Approve(),
     )
     expected = assemble_helper(expected_ast)
-    with pt.TealComponent.Context.ignoreScratchSlotEquality(), pt.TealComponent.Context.ignoreExprEquality():
+    with (
+        pt.TealComponent.Context.ignoreScratchSlotEquality(),
+        pt.TealComponent.Context.ignoreExprEquality(),
+    ):
         assert actual == expected
 
     assert pt.TealBlock.MatchScratchSlotReferences(

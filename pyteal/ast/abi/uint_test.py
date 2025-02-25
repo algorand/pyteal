@@ -68,11 +68,11 @@ testData = [
         expectedBits=64,
         maxValue=2**64 - 1,
         checkUpperBound=False,
-        expectedDecoding=lambda encoded, start_index, end_index, length: pt.Btoi(
-            encoded
-        )
-        if start_index is None and end_index is None and length is None
-        else pt.ExtractUint64(encoded, noneToInt0(start_index)),
+        expectedDecoding=lambda encoded, start_index, end_index, length: (
+            pt.Btoi(encoded)
+            if start_index is None and end_index is None and length is None
+            else pt.ExtractUint64(encoded, noneToInt0(start_index))
+        ),
         expectedEncoding=lambda uintType: pt.Itob(uintType.get()),
     ),
 ]
