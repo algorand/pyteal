@@ -6,6 +6,21 @@
 
 ## Changed
 
+# v0.27.0
+
+## Added
+
+* Added new fields for global, acct_params_get, and block ([#722](https://github.com/algorand/pyteal/pull/722)))
+  * Added new fields for global, acct_params_get, and block
+  * online_state and voter_params_get
+  * mimc opcode
+
+## Changed
+
+* Update recurring_swap.py ([#721](https://github.com/algorand/pyteal/pull/721))
+* Bump setuptools from 69.0.2 to 70.0.0 ([#725](https://github.com/algorand/pyteal/pull/725))
+* Upgrade Black to 24.8.0. ([#724](https://github.com/algorand/pyteal/pull/724))
+
 # v0.26.1
 
 ## Fixed
