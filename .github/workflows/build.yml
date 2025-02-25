@@ -76,7 +76,7 @@ jobs:
       - name: Build package
         run: make bdist-wheel
       - name: Release
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@release/v1.12
         with:
           user: __token__
           password: ${{ secrets.PYPI_API_TOKEN }}
