@@ -714,9 +714,9 @@ class RouterSimulation:
     def simulate_and_assert(
         self,
         approval_args_strat_type: Type[ABIStrategy],
-        clear_args_strat_type_or_inputs: Type[ABIStrategy]
-        | list[Sequence[PyTypes]]
-        | None,
+        clear_args_strat_type_or_inputs: (
+            Type[ABIStrategy] | list[Sequence[PyTypes]] | None
+        ),
         approval_abi_args_mod: ABIArgsMod | None,
         version: int,
         method_configs: ABICallConfigs,
@@ -867,7 +867,9 @@ call_strat={type(approval_strat)}
         approval_strat = None
         call_cfg = None
         approve_sim = None
-        clear_strat_or_inputs: InputStrategy  # CallStrategy | Iterable[Sequence[PyTypes]]
+        clear_strat_or_inputs: (
+            InputStrategy  # CallStrategy | Iterable[Sequence[PyTypes]]
+        )
         clear_sim: Simulation | None = None
         if not omit_clear_call:
             assert clear_args_strat_type_or_inputs  # therefore Type[ABIStrategy] | list[Sequence[PyTypes]]
