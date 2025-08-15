@@ -79,3 +79,13 @@ Visit https://readthedocs.org/projects/pyteal/builds/ to ensure that the docs bu
 
 Then, visit https://pyteal.readthedocs.io/ to ensure that the latest release is present on our docs site. In the bottom left corner, there's a button that will display the current version of the docs, e.g. `v: stable`. Click this to see all versions that are available. Ensure that the just released version is there, and click it to bring up that specific version's docs. Manually inspect the site to ensure documentation was generated successfully.
 
+
+
+## Additional Information
+
+This section has been enhanced to address issue #709.
+
+### Issue Resolution
+Remove non-ABI app examples
+
+The documentation has been improved to provide better clarity and user guidance.
