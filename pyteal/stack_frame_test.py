@@ -19,6 +19,14 @@ def test_is_pyteal():
     sf = StackFrame(FrameInfo(), None, NatalStackFrame())
     assert sf._is_pyteal()
 
+    FrameInfo.return_value.filename = r"C:\workspace\pyteal\ir\expr.py"
+    sf = StackFrame(FrameInfo(), None, NatalStackFrame())
+    assert sf._is_pyteal()
+
+    FrameInfo.return_value.filename = r"C:\workspace\pyteal\not_really..."
+    sf = StackFrame(FrameInfo(), None, NatalStackFrame())
+    assert not sf._is_pyteal()
+
     FrameInfo.return_value.filename = "blahblah/pyteal/not_really..."
     sf = StackFrame(FrameInfo(), None, NatalStackFrame())
     assert not sf._is_pyteal()

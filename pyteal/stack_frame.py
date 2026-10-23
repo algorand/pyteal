@@ -131,7 +131,9 @@ class StackFrame:
 
     @classmethod
     def _frame_info_is_pyteal(cls, f: FrameInfo) -> bool:
-        return bool(cls._internal_paths_re.search(f.filename))
+        # FrameInfo filenames use the host's path separators. Normalize before
+        # matching the forward-slash patterns in _internal_paths.
+        return bool(cls._internal_paths_re.search(f.filename.replace("\\", "/")))
 
     @classmethod
     def _frame_info_is_pyteal_import(cls, f: FrameInfo) -> bool:
